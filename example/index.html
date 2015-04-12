@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+
+    <script src="../bower_components/d3/d3.js"></script>
+    <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+
+    <link rel="stylesheet" href="../src/less/default.css"/>
+</head>
+<body>
+
+<div id="svg">
+
+</div>
+<div id="svg2">
+
+</div>
+
+
+<script src="../src/asgard.js"></script>
+
+<script>
+
+    var symbol = 'XAUUSD',
+            interval = '1',
+            rows = 3000;
+    var api = 'http://api.markets.wallstreetcn.com:80/v1/chart.json?symbol=' + symbol + '&interval=' + interval + '&rows=' + rows;
+
+    /**
+     *
+     *   1D   每月递增  zoom 1 不变 2 不变 3 不变 4
+     *
+     *
+     */
+
+    var customTimeFormat = d3.time.format.multi([
+        [".%L", function(d) { return d.getMilliseconds(); }],
+        [":%S", function(d) { return d.getSeconds(); }],
+        ["%I:%M", function(d) { return d.getMinutes(); }],
+        ["%I %p", function(d) { return d.getHours(); }],
+        ["%a %d", function(d) { return d.getDay() && d.getDate() != 1; }],
+        ["%b %d", function(d) { return d.getDate() != 1; }],
+        ["%B", function(d) { return d.getMonth(); }],
+        ["%Y", function(d) { console.log(d) }]
+    ]);
+
+
+    $.get(api, function (data) {
+
+        var p = new Asgard.Stock('#svg', {
+            width:600,
+            height:300,
+            isZoom:true,
+            interval:'1M',
+            data:[
+                {
+                    name:'sh00001',
+                    data:data.results
+                },
+                {
+                    name:'sh00002',
+                    data:data.results
+                }
+            ],
+            components: [
+                {
+                    name:'axis-bottom',
+                    type: 'axis',
+                    orient: 'bottom'
+                },
+                {
+                    name:'axis-right',
+                    type: 'axis',
+                    orient: 'right'
+                },
+                {
+                    name:'grid-x',
+                    type:'grid',
+                    orient:'x'
+                },
+                {
+                    name:'grid-y',
+                    type:'grid',
+                    orient:'y'
+                },
+//                {
+//                    name:'tips',
+//                    type:'tips'
+//                }
+            ],
+            charts:[
+                {
+                    name:'sh00001-CandleStick',
+                    type:'CandleStick',
+                    dataName:'sh00001'
+                }
+            ]
+
+        });
+
+
+        var p2 = new Asgard.Stock('#svg', {
+            width:600,
+            height:300,
+            isZoom:true,
+            interval:'1M',
+            data:[
+                {
+                    name:'sh00001',
+                    data:data.results
+                },
+                {
+                    name:'sh00002',
+                    data:data.results
+                }
+            ],
+            components: [
+                {
+                    name:'axis-bottom',
+                    type: 'axis',
+                    orient: 'bottom'
+                },
+                {
+                    name:'axis-right',
+                    type: 'axis',
+                    orient: 'right'
+                },
+                {
+                    name:'grid-x',
+                    type:'grid',
+                    orient:'x'
+                },
+                {
+                    name:'grid-y',
+                    type:'grid',
+                    orient:'y'
+                }
+            ],
+            charts:[
+                {
+                    name:'sh00001-area',
+                    type:'area',
+                    dataName:'sh00001'
+                }
+
+            ]
+
+        });
+        var p3 = new Asgard.Stock('#svg', {
+            width:600,
+            height:300,
+            isZoom:true,
+            interval:'1M',
+            data:[
+                {
+                    name:'sh00001',
+                    data:data.results
+                }
+            ],
+            components: [
+                {
+                    name:'axis-bottom',
+                    type: 'axis',
+                    orient: 'bottom'
+                },
+                {
+                    name:'axis-right',
+                    type: 'axis',
+                    orient: 'right'
+                },
+                {
+                    name:'grid-x',
+                    type:'grid',
+                    orient:'x'
+                },
+                {
+                    name:'grid-y',
+                    type:'grid',
+                    orient:'y'
+                }
+            ],
+            charts:[
+                {
+                    name:'sh00001-line',
+                    type:'line',
+                    dataName:'sh00001'
+                }
+
+            ]
+
+        });
+
+        p.draw();
+        p2.draw();
+        p3.draw();
+
+
+        p.addChart({
+            name:'sh00001-line',
+            type:'line',
+            dataName:'sh00001'
+        });
+
+        setTimeout(function(){
+            p.draw();
+        },3000);
+
+        p.addSync(p2).addSync(p3);
+        p2.addSync(p).addSync(p3);
+        p3.addSync(p2).addSync(p);
+
+
+
+    },'jsonp');
+
+
+
+
+</script>
+
+
+<script>
+    //    var api = 'http://api.markets.wallstreetcn.com/v1/tradingView/history?symbol=XAUUSD&resolution=1d&from=1333443736&to=1428051736&callback=jQuery20307764852049294859_1428051733178&_=1428051733181';
+    //    $.get(api,function(data){
+    //        console.log(data);
+    //    },'jsonp')
+
+</script>
+
+
+
+</body>
+</html>

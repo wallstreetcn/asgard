@@ -1,0 +1,12 @@
+{
+  "name": "Asgard",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^3.8.11",
+    "gulp-tsc": "^0.9.4"
+  }
+}

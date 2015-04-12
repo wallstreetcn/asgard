@@ -1,0 +1,84 @@
+
+.asgard-hide{
+  display: none!important;
+}
+
+.asgard-tips-component{
+
+  .asgard-tips-x,
+  .asgard-tips-y{
+    stroke: #e62fff;
+  }
+}
+.asgard-axis-component {
+
+  &.axis {
+    &-right,
+    &-left,
+    &-top,
+    &-bottom {
+
+      stroke: #00f5ff;
+
+      .tick text {
+        stroke: #333;
+      }
+
+    }
+  }
+
+}
+
+.asgard-grid-component {
+  stroke: #ddd;
+  stroke-opacity: 0.5;
+}
+
+.asgard-line-chart {
+
+  path {
+    stroke: #e62fff;
+  }
+
+}
+
+.asgard-area-chart {
+
+  path {
+    fill: #e820ff;
+    fill-opacity: 0.2;
+  }
+
+}
+
+.asgard-highlowline-chart{
+  stroke: #000;
+}
+
+.asgard-highlowrect-chart,
+.asgard-ohlc-chart{
+
+  .up-rect{
+    fill: #028015;
+    stroke: #028015;
+  }
+
+  .down-rect{
+    stroke: #ff0002;
+    fill:#ff0002;
+  }
+}
+
+.asgard-candlestick-chart{
+
+  stroke: #000;
+
+  .up-day{
+    fill: #fff;
+    stroke: #028015;
+  }
+  .down-day{
+    stroke: #ff0002;
+    fill:#ff0002;
+  }
+}

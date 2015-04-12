@@ -1,0 +1,54 @@
+.asgard-hide {
+  display: none!important;
+}
+.asgard-tips-component .asgard-tips-x,
+.asgard-tips-component .asgard-tips-y {
+  stroke: #e62fff;
+}
+.asgard-axis-component.axis-right,
+.asgard-axis-component.axis-left,
+.asgard-axis-component.axis-top,
+.asgard-axis-component.axis-bottom {
+  stroke: #00f5ff;
+}
+.asgard-axis-component.axis-right .tick text,
+.asgard-axis-component.axis-left .tick text,
+.asgard-axis-component.axis-top .tick text,
+.asgard-axis-component.axis-bottom .tick text {
+  stroke: #333;
+}
+.asgard-grid-component {
+  stroke: #ddd;
+  stroke-opacity: 0.5;
+}
+.asgard-line-chart path {
+  stroke: #e62fff;
+}
+.asgard-area-chart path {
+  fill: #e820ff;
+  fill-opacity: 0.2;
+}
+.asgard-highlowline-chart {
+  stroke: #000;
+}
+.asgard-highlowrect-chart .up-rect,
+.asgard-ohlc-chart .up-rect {
+  fill: #028015;
+  stroke: #028015;
+}
+.asgard-highlowrect-chart .down-rect,
+.asgard-ohlc-chart .down-rect {
+  stroke: #ff0002;
+  fill: #ff0002;
+}
+.asgard-candlestick-chart {
+  stroke: #000;
+}
+.asgard-candlestick-chart .up-day {
+  fill: #fff;
+  stroke: #028015;
+}
+.asgard-candlestick-chart .down-day {
+  stroke: #ff0002;
+  fill: #ff0002;
+}
