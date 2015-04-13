@@ -7,6 +7,9 @@
   "license": "ISC",
   "devDependencies": {
     "gulp": "^3.8.11",
+    "gulp-less": "^3.0.2",
+    "gulp-livereload": "^3.8.0",
+    "gulp-plumber": "^1.0.0",
     "gulp-tsc": "^0.9.4"
   }
 }

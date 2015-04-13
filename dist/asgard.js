@@ -11,12 +11,14 @@ var Asgard;
     Asgard.version = '0.0.1';
     var Util;
     (function (Util) {
+        var toString = Object.prototype.toString;
         function isArray(value) {
             return toString.call(value) === '[object Array]';
         }
         Util.isArray = isArray;
         function generateClassName(object, suffix) {
-            return Asgard.name.toLowerCase() + '-' + getClassName(object).toLowerCase() + '-' + suffix;
+            suffix = suffix ? '-' + suffix : '';
+            return Asgard.name.toLowerCase() + '-' + getClassName(object).toLowerCase() + suffix;
         }
         Util.generateClassName = generateClassName;
         function getClassName(obj) {
@@ -30,8 +32,7 @@ var Asgard;
         }
         Util.getClassName = getClassName;
         function capitalize(str) {
-            return String(str.charAt(0)).toUpperCase() +
-                String(str.substr(1));
+            return String(str.charAt(0)).toUpperCase() + String(str.substr(1));
         }
         Util.capitalize = capitalize;
     })(Util = Asgard.Util || (Asgard.Util = {}));
@@ -76,7 +77,7 @@ var Asgard;
             };
             DataContainer.prototype.getShowCount = function () {
                 var width = this._stock._width, right = this._stock._margin.left, left = this._stock._margin.right;
-                return (width - right - left) / 8;
+                return (width - right - left) / 15;
             };
             DataContainer.prototype.getXdomain = function () {
                 var data = this.getData(this._defaultName);
@@ -88,8 +89,8 @@ var Asgard;
                 }));
                 var minDate = date[0], maxDate = date[1];
                 return [
-                    minDate.setMinutes(minDate.getMinutes() - 15),
-                    maxDate.setMinutes(maxDate.getMinutes() + 15)
+                    minDate.setMinutes(minDate.getMinutes() - 2),
+                    maxDate.setMinutes(maxDate.getMinutes() + 2)
                 ];
             };
             DataContainer.prototype.getYdomain = function () {
@@ -98,6 +99,28 @@ var Asgard;
                     data = Array.prototype.slice.apply(data, [0, this.getShowCount()]);
                 }
                 return this.getMinAndMaxPrice(data);
+            };
+            DataContainer.prototype.getNearDataByDate = function (date) {
+                var data = this._data[this._defaultName], index;
+                data.forEach(function (d, i) {
+                    if (index === undefined && d.start < date) {
+                        index = i;
+                    }
+                });
+                if (index === undefined) {
+                    return data[data.length - 1];
+                }
+                var next = index - 1;
+                if (next < 0) {
+                    return data[index];
+                }
+                var minData = data[index], maxData = data[next];
+                if (date - minData.start < maxData.start - date) {
+                    return minData;
+                }
+                else {
+                    return maxData;
+                }
             };
             DataContainer.prototype.getDataByDateRange = function (gtValue, ltValue) {
                 var data = [];
@@ -150,11 +173,7 @@ var Asgard;
             BaseComponent.prototype._createContainer = function () {
                 var container = this._stock.getContainer(this._name);
                 if (!container) {
-                    container = this._stock
-                        .getContainer('baseSvg')
-                        .insert('g', ':first-child')
-                        .classed(Util.generateClassName(this, 'component'), true)
-                        .classed(this._name, true);
+                    container = this._stock.getContainer('baseSvg').insert('g', ':first-child').classed(Util.generateClassName(this), true).classed(this._name, true);
                     this._stock.addContainer(this._name, container);
                 }
                 return this;
@@ -186,11 +205,7 @@ var Asgard;
                 // set orient
                 this.setOrient(options['orient']);
                 // set default
-                this._d3Axis.scale(this._getScale(this._orient))
-                    .innerTickSize(0)
-                    .outerTickSize(0)
-                    .tickPadding(10)
-                    .ticks(8);
+                this._d3Axis.scale(this._getScale(this._orient)).innerTickSize(0).outerTickSize(0).tickPadding(10).ticks(6);
                 var key, values;
                 for (key in options) {
                     values = options[key];
@@ -304,8 +319,7 @@ var Asgard;
                 }
             };
             Grid.prototype.draw = function () {
-                var selection = this._stock.getContainer(this._name)
-                    .selectAll('line').data(this._getTicks(this._orient));
+                var selection = this._stock.getContainer(this._name).selectAll('line').data(this._getTicks(this._orient));
                 if (selection.empty()) {
                     selection = selection.enter().append('line');
                 }
@@ -319,16 +333,10 @@ var Asgard;
                 }
                 switch (this._orient) {
                     case 'y':
-                        selection.attr('x1', 0)
-                            .attr('y1', this._stock.getYScale())
-                            .attr('x2', this._stock.getWidth())
-                            .attr('y2', this._stock.getYScale());
+                        selection.attr('x1', 0).attr('y1', this._stock.getYScale()).attr('x2', this._stock.getWidth()).attr('y2', this._stock.getYScale());
                         break;
                     case 'x':
-                        selection.attr('x1', this._stock.getXScale())
-                            .attr('y1', 0)
-                            .attr('x2', this._stock.getXScale())
-                            .attr('y2', this._stock.getHeight());
+                        selection.attr('x1', this._stock.getXScale()).attr('y1', 0).attr('x2', this._stock.getXScale()).attr('y2', this._stock.getHeight());
                         break;
                 }
                 return this;
@@ -336,6 +344,48 @@ var Asgard;
             return Grid;
         })(BaseComponent);
         StockComponent.Grid = Grid;
+        var Tips = (function (_super) {
+            __extends(Tips, _super);
+            function Tips() {
+                _super.apply(this, arguments);
+            }
+            // tips 需要显示在最前面
+            Tips.prototype._createContainer = function () {
+                var container = this._stock.getContainer(this._name);
+                if (!container) {
+                    container = this._stock.getContainer('baseSvg').insert('g').classed(Util.generateClassName(this), true).classed(this._name, true);
+                    this._stock.addContainer(this._name, container);
+                }
+                return this;
+            };
+            Tips.prototype.draw = function () {
+                var stock = this._stock, xLine = stock.getContainer(this._name + '-x'), yLine = stock.getContainer(this._name + '-y'), xClassName = Util.generateClassName(this, 'x'), yClassName = Util.generateClassName(this, 'y');
+                if (!xLine) {
+                    xLine = stock.getContainer(this._name).append('line').classed(xClassName, true);
+                    stock.addContainer(this._name + '-x', xLine);
+                }
+                if (!yLine) {
+                    yLine = stock.getContainer(this._name).append('line').classed(yClassName, true);
+                    stock.addContainer(this._name + '-y', yLine);
+                }
+                this._stock.getContainer('baseSvg').on('mousemove', function () {
+                    var x = d3.mouse(this)[0], y = d3.mouse(this)[1], margin = stock.getMargin(), width = stock.getWidth(), height = stock.getHeight();
+                    if (x < margin.left || x > (margin.left + width) || y < margin.top || y > (margin.top + height)) {
+                        xLine.classed(stock.getHiddenClass(), true);
+                        yLine.classed(stock.getHiddenClass(), true);
+                        return;
+                    }
+                    var date = stock._xScale.invert(x - margin.left);
+                    var nearData = stock.getDataContainer().getNearDataByDate(date);
+                    var nearDataX = stock._xScale(nearData.start) + margin.left;
+                    xLine.attr('x1', 0).attr('y1', y).attr('x2', width).attr('y2', y).classed(stock.getHiddenClass(), false).attr('transform', 'translate(' + margin.left + ',0)');
+                    yLine.attr('x1', nearDataX).attr('y1', 0).attr('x2', nearDataX).attr('y2', height).classed(stock.getHiddenClass(), false).attr('transform', 'translate(0,' + margin.top + ')');
+                });
+                return this;
+            };
+            return Tips;
+        })(BaseComponent);
+        StockComponent.Tips = Tips;
     })(StockComponent = Asgard.StockComponent || (Asgard.StockComponent = {}));
     /**
      * Stock Chart
@@ -360,11 +410,7 @@ var Asgard;
             BaseChart.prototype._createContainer = function () {
                 var container = this._stock.getContainer(this._name);
                 if (!container) {
-                    container = this._stock
-                        .getContainer('dataClip')
-                        .insert('g')
-                        .classed(Util.generateClassName(this, 'chart'), true)
-                        .classed(this._name, true);
+                    container = this._stock.getContainer('dataClip').append('g').classed(Util.generateClassName(this), true).classed(this._name, true);
                 }
                 this._stock.addContainer(this._name, container);
                 return this;
@@ -408,7 +454,7 @@ var Asgard;
                 this._priceSource = options['priceSource'] || 'close';
                 return this;
             };
-            Line.prototype._getCoordinate = function (prevData, currentData) {
+            Line.prototype._getSvgCoordinate = function (prevData, currentData) {
                 var prevDate, prevPrice, xScale = this._stock.getXScale(), yScale = this._stock.getYScale();
                 if (!prevData) {
                     prevDate = new Date(currentData.start);
@@ -419,27 +465,36 @@ var Asgard;
                     prevPrice = this._getPriceByPriceScource(prevData);
                 }
                 return [{
-                        x: xScale(new Date(currentData.start)),
-                        y: yScale(currentData[this._priceSource])
-                    }, {
-                        x: xScale(prevDate),
-                        y: yScale(prevPrice)
-                    }];
+                    x: xScale(new Date(currentData.start)),
+                    y: yScale(currentData[this._priceSource])
+                }, {
+                    x: xScale(prevDate),
+                    y: yScale(prevPrice)
+                }];
             };
-            Line.prototype.draw = function () {
-                var _this = this;
-                var line = d3.svg.line().x(function (d) {
+            Line.prototype._createSvg = function () {
+                return d3.svg.line().x(function (d) {
                     return d.x;
                 }).y(function (d) {
                     return d.y;
                 });
-                var data = this._stock.getDataContainer().getData(this._dataName);
-                var selection = this._stock.getContainer(this._name).selectAll('path').data(data);
+            };
+            Line.prototype.draw = function () {
+                var _this = this;
+                var svg = this._createSvg(), data = this._stock.getDataContainer().getData(this._dataName), selection = this._stock.getContainer(this._name).selectAll('path').data(data);
                 if (selection.empty()) {
                     selection = selection.enter().append('path');
                 }
+                else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    }
+                    else {
+                        selection.enter().append('path');
+                    }
+                }
                 selection.attr('d', function (d, i) {
-                    return line(_this._getCoordinate(data[i + 1], d));
+                    return svg(_this._getSvgCoordinate(data[i + 1], d));
                 });
                 return this;
             };
@@ -451,22 +506,13 @@ var Asgard;
             function Area() {
                 _super.apply(this, arguments);
             }
-            Area.prototype.draw = function () {
-                var _this = this;
-                var area = d3.svg.area().x(function (d) {
+            Area.prototype._createSvg = function () {
+                var yScale = this._stock.getYScale();
+                return d3.svg.area().x(function (d) {
                     return d.x;
-                }).y0(this._stock.getYScale()(0)).y1(function (d) {
+                }).y0(yScale(0)).y1(function (d) {
                     return d.y;
                 });
-                var data = this._stock.getDataContainer().getData(this._dataName);
-                var selection = this._stock.getContainer(this._name).selectAll('path').data(data);
-                if (selection.empty()) {
-                    selection = selection.enter().append('path');
-                }
-                selection.attr('d', function (d, i) {
-                    return area(_this._getCoordinate(data[i + 1], d));
-                });
-                return this;
             };
             return Area;
         })(Line);
@@ -476,30 +522,97 @@ var Asgard;
             function Ohlc() {
                 _super.apply(this, arguments);
             }
+            Ohlc.prototype._parseOptions = function (options) {
+                this._rectWidth = options['rectWidth'] || 4;
+                return this;
+            };
+            Ohlc.prototype.getZoomRectWidth = function () {
+                var scale = 1;
+                if (d3.event) {
+                    scale = d3.event.scale;
+                }
+                scale = Math.max(1, scale);
+                scale = Math.min(4, scale);
+                return scale * this._rectWidth;
+            };
+            Ohlc.prototype.setRectWidth = function (rectWidth) {
+                this._rectWidth = rectWidth;
+                return this;
+            };
+            Ohlc.prototype.getRectWidth = function () {
+                return this._rectWidth;
+            };
             Ohlc.prototype._isUp = function (d) {
-                return d.close > d.open || d.close === d.open;
+                return d.close > d.open;
             };
             Ohlc.prototype._isDown = function (d) {
                 return d.close < d.open;
             };
+            Ohlc.prototype._isConsolidation = function (d) {
+                return d.close === d.open;
+            };
             return Ohlc;
         })(BaseChart);
         StockChart.Ohlc = Ohlc;
-        var CandleStick = (function (_super) {
-            __extends(CandleStick, _super);
-            function CandleStick() {
+        var Candle = (function (_super) {
+            __extends(Candle, _super);
+            function Candle() {
                 _super.apply(this, arguments);
             }
-            CandleStick.prototype._parseOptions = function (options) {
-                this._rectWidth = options['rectWidth'] || 4;
+            Candle.prototype._drawHighLowLine = function () {
+                var selection = this._stock.getContainer(this._name).selectAll('path').data(this._stock.getDataContainer().getData(this._dataName), function (d) {
+                    return d.start;
+                });
+                if (selection.empty()) {
+                    selection = selection.enter().append('path');
+                }
+                else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    }
+                    else {
+                        selection.enter().append('path');
+                    }
+                }
+                selection.attr('d', this._highLowline()).classed(Util.generateClassName(this, 'line'), true);
                 return this;
             };
-            CandleStick.prototype._highLowlineValue = function () {
-                var d3Line = d3.svg.line()
-                    .x(function (d) {
+            Candle.prototype._drawCandleRect = function () {
+                var _this = this;
+                var selection = this._stock.getContainer(this._name).selectAll('rect').data(this._stock.getDataContainer().getData(this._dataName), function (d) {
+                    return d.start;
+                });
+                if (selection.empty()) {
+                    selection = selection.enter().append('rect');
+                }
+                else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    }
+                    else {
+                        selection.enter().append('rect');
+                    }
+                }
+                var xScale = this._stock.getXScale(), yScale = this._stock.getYScale(), RectWidth = this.getZoomRectWidth();
+                selection.attr('x', function (d) {
+                    return xScale(new Date(d.start)) - RectWidth / 2;
+                }).attr('y', function (d) {
+                    return _this._isUp(d) ? yScale(d.close) : yScale(d.open);
+                }).attr('width', RectWidth).attr('height', (function (d) {
+                    var height = _this._isUp(d) ? yScale(d.open) - yScale(d.close) : yScale(d.close) - yScale(d.open);
+                    return Math.max(height, 1);
+                })).classed(Util.generateClassName(this, 'rect'), true).classed(Util.generateClassName(this, 'up'), this._isUp).classed(Util.generateClassName(this, 'down'), this._isDown).classed(Util.generateClassName(this, 'consolidation'), this._isConsolidation);
+                return this;
+            };
+            Candle.prototype.draw = function () {
+                this._drawHighLowLine();
+                this._drawCandleRect();
+                return this;
+            };
+            Candle.prototype._highLowline = function () {
+                var d3Line = d3.svg.line().x(function (d) {
                     return d.x;
-                })
-                    .y(function (d) {
+                }).y(function (d) {
                     return d.y;
                 }), xScale = this._stock._xScale, yScale = this._stock._yScale;
                 return function (d) {
@@ -515,50 +628,217 @@ var Asgard;
                     ]);
                 };
             };
-            CandleStick.prototype.getZoomRectWidth = function () {
-                var scale = 1;
-                if (d3.event) {
-                    scale = d3.event.scale;
-                }
-                scale = Math.max(1, scale);
-                scale = Math.min(3, scale);
-                return scale * this._rectWidth;
-            };
-            CandleStick.prototype.draw = function () {
-                var _this = this;
-                // line
-                var selection = this._stock.getContainer(this._name).selectAll('path').data(this._stock.getDataContainer().getData(this._dataName), function (d) {
+            return Candle;
+        })(Ohlc);
+        StockChart.Candle = Candle;
+        var HollowCandle = (function (_super) {
+            __extends(HollowCandle, _super);
+            function HollowCandle() {
+                _super.apply(this, arguments);
+            }
+            HollowCandle.prototype._drawHighLine = function () {
+                var className = Util.generateClassName(this, 'high-line'), selection = this._stock.getContainer(this._name).selectAll('path.' + className).data(this._stock.getDataContainer().getData(this._dataName), function (d) {
                     return d.start;
                 });
                 if (selection.empty()) {
                     selection = selection.enter().append('path');
                 }
-                selection.attr('d', this._highLowlineValue());
-                // candle
-                var selection = this._stock.getContainer(this._name).selectAll('rect').data(this._stock.getDataContainer().getData(this._dataName), function (d) {
+                else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    }
+                    else {
+                        selection.enter().append('path');
+                    }
+                }
+                selection.attr('d', this._highLine()).classed(className, true);
+                return this;
+            };
+            HollowCandle.prototype._lowLine = function () {
+                var d3Line = d3.svg.line().x(function (d) {
+                    return d.x;
+                }).y(function (d) {
+                    return d.y;
+                }), xScale = this._stock._xScale, yScale = this._stock._yScale;
+                return function (d) {
+                    return d3Line([
+                        {
+                            x: xScale(new Date(d.start)),
+                            y: yScale(Math.min(d.close, d.open))
+                        },
+                        {
+                            x: xScale(new Date(d.start)),
+                            y: yScale(d.low)
+                        }
+                    ]);
+                };
+            };
+            HollowCandle.prototype._highLine = function () {
+                var d3Line = d3.svg.line().x(function (d) {
+                    return d.x;
+                }).y(function (d) {
+                    return d.y;
+                }), xScale = this._stock._xScale, yScale = this._stock._yScale;
+                return function (d) {
+                    return d3Line([
+                        {
+                            x: xScale(new Date(d.start)),
+                            y: yScale(d.high)
+                        },
+                        {
+                            x: xScale(new Date(d.start)),
+                            y: yScale(Math.max(d.close, d.open))
+                        }
+                    ]);
+                };
+            };
+            HollowCandle.prototype._drawLowLine = function () {
+                var className = Util.generateClassName(this, 'low-line'), selection = this._stock.getContainer(this._name).selectAll('path.' + className).data(this._stock.getDataContainer().getData(this._dataName), function (d) {
+                    return d.start;
+                });
+                if (selection.empty()) {
+                    selection = selection.enter().append('path');
+                }
+                else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    }
+                    else {
+                        selection.enter().append('path');
+                    }
+                }
+                selection.attr('d', this._lowLine()).classed(className, true);
+                return this;
+            };
+            HollowCandle.prototype.draw = function () {
+                this._drawHighLine();
+                this._drawLowLine();
+                this._drawCandleRect();
+                return this;
+            };
+            return HollowCandle;
+        })(Candle);
+        StockChart.HollowCandle = HollowCandle;
+        var Bars = (function (_super) {
+            __extends(Bars, _super);
+            function Bars() {
+                _super.apply(this, arguments);
+            }
+            Bars.prototype._drawCloseRect = function () {
+                var _this = this;
+                var className = Util.generateClassName(this, 'close-rect'), selection = this._stock.getContainer(this._name).selectAll('rect.' + className).data(this._stock.getDataContainer().getData(this._dataName), function (d) {
                     return d.start;
                 });
                 if (selection.empty()) {
                     selection = selection.enter().append('rect');
                 }
+                else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    }
+                    else {
+                        selection.enter().append('rect');
+                    }
+                }
+                var xScale = this._stock.getXScale(), yScale = this._stock.getYScale(), RectWidth = this.getZoomRectWidth();
+                selection.attr('x', function (d) {
+                    var x = xScale(new Date(d.start));
+                    if (_this._isUp(d)) {
+                        x -= RectWidth + RectWidth / 2;
+                    }
+                    else {
+                        x -= RectWidth - RectWidth / 2;
+                    }
+                    return x;
+                }).attr('y', function (d) {
+                    var y;
+                    if (_this._isUp(d)) {
+                        y = yScale(d.open);
+                    }
+                    else {
+                        y = yScale(d.close);
+                    }
+                    return y;
+                }).attr('width', RectWidth * 2).attr('height', (function (d) {
+                    return RectWidth;
+                })).classed(className, true).classed(Util.generateClassName(this, 'up'), this._isUp).classed(Util.generateClassName(this, 'down'), this._isDown).classed(Util.generateClassName(this, 'consolidation'), this._isConsolidation);
+                return this;
+            };
+            Bars.prototype._drawOpenRect = function () {
+                var _this = this;
+                var className = Util.generateClassName(this, 'open-rect'), selection = this._stock.getContainer(this._name).selectAll('rect.' + className).data(this._stock.getDataContainer().getData(this._dataName), function (d) {
+                    return d.start;
+                });
+                if (selection.empty()) {
+                    selection = selection.enter().append('rect');
+                }
+                else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    }
+                    else {
+                        selection.enter().append('rect');
+                    }
+                }
+                var xScale = this._stock.getXScale(), yScale = this._stock.getYScale(), RectWidth = this.getZoomRectWidth();
+                selection.attr('x', function (d) {
+                    var x = xScale(new Date(d.start));
+                    if (_this._isDown(d)) {
+                        x -= RectWidth + RectWidth / 2;
+                    }
+                    else {
+                        x -= RectWidth - RectWidth / 2;
+                    }
+                    return x;
+                }).attr('y', function (d) {
+                    var y;
+                    if (_this._isDown(d)) {
+                        y = yScale(d.open);
+                    }
+                    else {
+                        y = yScale(d.close);
+                    }
+                    return y;
+                }).attr('width', RectWidth * 2).attr('height', (function (d) {
+                    return RectWidth;
+                })).classed(className, true).classed(Util.generateClassName(this, 'up'), this._isUp).classed(Util.generateClassName(this, 'down'), this._isDown).classed(Util.generateClassName(this, 'consolidation'), this._isConsolidation);
+                return this;
+            };
+            Bars.prototype._drawHighLowRect = function () {
+                var className = Util.generateClassName(this, 'high-low-rect'), selection = this._stock.getContainer(this._name).selectAll('rect.' + className).data(this._stock.getDataContainer().getData(this._dataName), function (d) {
+                    return d.start;
+                });
+                if (selection.empty()) {
+                    selection = selection.enter().append('rect');
+                }
+                else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    }
+                    else {
+                        selection.enter().append('rect');
+                    }
+                }
                 var xScale = this._stock.getXScale(), yScale = this._stock.getYScale(), RectWidth = this.getZoomRectWidth();
                 selection.attr('x', function (d) {
                     return xScale(new Date(d.start)) - RectWidth / 2;
                 }).attr('y', function (d) {
-                    return _this._isUp(d) ? yScale(d.close) : yScale(d.open);
-                }).attr('width', RectWidth)
-                    .attr('height', (function (d) {
-                    var height = _this._isUp(d) ? yScale(d.open) - yScale(d.close) : yScale(d.close) - yScale(d.open);
+                    return yScale(d.high);
+                }).attr('width', RectWidth).attr('height', (function (d) {
+                    var height = yScale(d.low) - yScale(d.high);
                     return Math.max(height, 1);
-                })).classed({
-                    'up-day': this._isUp,
-                    'down-day': this._isDown
-                });
+                })).classed(className, true).classed(Util.generateClassName(this, 'up'), this._isUp).classed(Util.generateClassName(this, 'down'), this._isDown).classed(Util.generateClassName(this, 'consolidation'), this._isConsolidation);
                 return this;
             };
-            return CandleStick;
+            Bars.prototype.draw = function () {
+                this._drawHighLowRect();
+                this._drawOpenRect();
+                this._drawCloseRect();
+                return this;
+            };
+            return Bars;
         })(Ohlc);
-        StockChart.CandleStick = CandleStick;
+        StockChart.Bars = Bars;
     })(StockChart = Asgard.StockChart || (Asgard.StockChart = {}));
     var Stock = (function () {
         function Stock(selection, options) {
@@ -571,6 +851,7 @@ var Asgard;
             this._components = {};
             this._charts = {};
             this._sync = [];
+            this._hiddenClass = Asgard.name + '-hide';
             // 重要的options
             options.width && (this._width = options.width);
             options.height && (this._height = options.height);
@@ -586,7 +867,13 @@ var Asgard;
         }
         Stock.prototype._initZoom = function () {
             this._zoom = d3.behavior.zoom();
-            this._zoom.scaleExtent([-2, 14]);
+            var scaleExtend;
+            switch (this._interval) {
+                case '1':
+                    scaleExtend = [1, 3];
+                    break;
+            }
+            this._zoom.scaleExtent(scaleExtend);
             this.getContainer('baseSvg').call(this._zoom);
             this.zoom(function () {
             });
@@ -604,19 +891,12 @@ var Asgard;
                 width: this.getWidth(),
                 height: this.getHeight()
             });
-            dataClipContainer = dataContainer.append('g')
-                .attr('clip-path', 'url(#plotAreaClip)');
-            dataClipContainer.append('clipPath')
-                .attr('id', 'plotAreaClip')
-                .append('rect')
-                .attr({
+            dataClipContainer = dataContainer.append('g').attr('clip-path', 'url(#plotAreaClip)');
+            dataClipContainer.append('clipPath').attr('id', 'plotAreaClip').append('rect').attr({
                 width: this.getWidth(),
                 height: this.getHeight()
             });
-            this.addContainer('base', baseContainer)
-                .addContainer('baseSvg', baseSvgContainer)
-                .addContainer('data', dataContainer)
-                .addContainer('dataClip', dataClipContainer);
+            this.addContainer('base', baseContainer).addContainer('baseSvg', baseSvgContainer).addContainer('data', dataContainer).addContainer('dataClip', dataClipContainer);
             return this;
         };
         Stock.prototype._initScale = function () {
@@ -748,6 +1028,9 @@ var Asgard;
         };
         Stock.prototype.getDataContainer = function () {
             return this._dataContainer;
+        };
+        Stock.prototype.getHiddenClass = function () {
+            return this._hiddenClass;
         };
         return Stock;
     })();

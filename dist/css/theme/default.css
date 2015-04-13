@@ -1,0 +1,86 @@
+.asgard-hide {
+  display: none !important;
+}
+.asgard-tips .asgard-tips-x,
+.asgard-tips .asgard-tips-y {
+  stroke: #e62fff;
+  stroke-dasharray: 5,5;
+}
+.asgard-axis.axis-right,
+.asgard-axis.axis-left,
+.asgard-axis.axis-top,
+.asgard-axis.axis-bottom {
+  stroke: #00f5ff;
+}
+.asgard-axis.axis-right .tick text,
+.asgard-axis.axis-left .tick text,
+.asgard-axis.axis-top .tick text,
+.asgard-axis.axis-bottom .tick text {
+  stroke: #333;
+}
+.asgard-grid {
+  stroke: #ddd;
+  stroke-opacity: 0.5;
+}
+.asgard-line path {
+  stroke: #e62fff;
+}
+.asgard-area path {
+  fill: #e820ff;
+  fill-opacity: 0.2;
+}
+.asgard-highlowrect .up-rect,
+.asgard-ohlc .up-rect {
+  fill: #028015;
+  stroke: #028015;
+}
+.asgard-highlowrect .down-rect,
+.asgard-ohlc .down-rect {
+  stroke: #ff0002;
+  fill: #ff0002;
+}
+.asgard-candle .asgard-candle-line {
+  stroke: #000;
+}
+.asgard-candle .asgard-candle-rect {
+  stroke: #000;
+}
+.asgard-candle .asgard-candle-up {
+  fill: #028015;
+}
+.asgard-candle .asgard-candle-down {
+  fill: #ff0002;
+}
+.asgard-candle .asgard-candle-consolidation {
+  fill: #028015;
+  stroke: transparent;
+}
+.asgard-hollowcandle .asgard-hollowcandle-high-line,
+.asgard-hollowcandle .asgard-hollowcandle-low-line {
+  stroke: #000;
+}
+.asgard-hollowcandle .asgard-hollowcandle-rect {
+  stroke: #000;
+}
+.asgard-hollowcandle .asgard-hollowcandle-rect.asgard-hollowcandle-up {
+  stroke: #028015;
+}
+.asgard-hollowcandle .asgard-hollowcandle-up {
+  fill: transparent;
+}
+.asgard-hollowcandle .asgard-hollowcandle-down {
+  fill: #ff0002;
+}
+.asgard-hollowcandle .asgard-hollowcandle-consolidation {
+  fill: #028015;
+  stroke: transparent;
+}
+.asgard-bars .asgard-bars-up {
+  fill: #028015;
+}
+.asgard-bars .asgard-bars-down {
+  fill: #ff0002;
+}
+.asgard-bars .asgard-bars-consolidation {
+  fill: #028015;
+}

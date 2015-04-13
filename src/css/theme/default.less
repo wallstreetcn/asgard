@@ -1,0 +1,136 @@
+
+@name:asgard;
+
+
+.@{name}-hide{
+  display: none !important;
+}
+
+.@{name}-tips{
+
+  .@{name}-tips-x,
+  .@{name}-tips-y{
+    stroke: #e62fff;
+    stroke-dasharray: 5,5;
+  }
+}
+
+
+.@{name}-axis {
+
+  &.axis {
+    &-right,
+    &-left,
+    &-top,
+    &-bottom {
+
+      stroke: #00f5ff;
+
+      .tick text {
+        stroke: #333;
+      }
+
+    }
+  }
+
+}
+
+.@{name}-grid{
+  stroke: #ddd;
+  stroke-opacity: 0.5;
+}
+
+.@{name}-line {
+
+  path {
+    stroke: #e62fff;
+  }
+
+}
+
+.@{name}-area {
+
+  path {
+    fill: #e820ff;
+    fill-opacity: 0.2;
+  }
+
+}
+
+
+.@{name}-highlowrect,
+.@{name}-ohlc{
+
+  .up-rect{
+    fill: #028015;
+    stroke: #028015;
+  }
+
+  .down-rect{
+    stroke: #ff0002;
+    fill:#ff0002;
+  }
+}
+
+
+.@{name}-candle{
+
+  .@{name}-candle-line{
+    stroke: #000;
+  }
+  .@{name}-candle-rect{
+    stroke: #000;
+  }
+  .@{name}-candle-up{
+    fill: #028015;
+  }
+  .@{name}-candle-down{
+    fill: #ff0002;
+  }
+  .@{name}-candle-consolidation{
+    fill: #028015;
+    stroke: transparent;
+  }
+
+}
+
+.@{name}-hollowcandle{
+
+  .@{name}-hollowcandle-high-line,
+  .@{name}-hollowcandle-low-line{
+    stroke: #000;
+  }
+
+  .@{name}-hollowcandle-rect{
+    stroke: #000;
+  }
+
+  .@{name}-hollowcandle-rect.@{name}-hollowcandle-up{
+    stroke: #028015;
+  }
+  .@{name}-hollowcandle-up{
+    fill: transparent;
+  }
+  .@{name}-hollowcandle-down{
+    fill: #ff0002;
+  }
+  .@{name}-hollowcandle-consolidation{
+    fill: #028015;
+    stroke: transparent;
+  }
+
+}
+
+
+.@{name}-bars{
+  .@{name}-bars-up{
+    fill: #028015;
+  }
+  .@{name}-bars-down{
+    fill: #ff0002;
+  }
+  .@{name}-bars-consolidation{
+    fill: #028015;
+  }
+
+}

@@ -1,6 +1,5 @@
 /// <reference path="../typings/d3/d3.d.ts" />
 
-
 module Asgard {
 
     export var name = 'asgard';
@@ -9,15 +8,20 @@ module Asgard {
 
     export module Util {
 
+        var toString = Object.prototype.toString;
+
         export function isArray(value:any):boolean {
             return toString.call(value) === '[object Array]';
         }
 
-        export function generateClassName(object:Object, suffix:string):string {
-            return name.toLowerCase() + '-' + getClassName(object).toLowerCase() + '-' + suffix;
+        export function generateClassName(object:Object, suffix?:string):string {
+
+            suffix = suffix ? '-' + suffix : '';
+
+            return name.toLowerCase() + '-' + getClassName(object).toLowerCase()  + suffix;
         }
 
-        export function getClassName(obj:Object):string {
+        export function getClassName(obj:any):string {
             if (obj && obj.constructor) {
                 var strFun = obj.constructor.toString();
                 var className = strFun.substr(0, strFun.indexOf('('));
@@ -32,7 +36,6 @@ module Asgard {
                 String(str.substr(1));
         }
     }
-
 
     export module StockData {
 
@@ -103,7 +106,7 @@ module Asgard {
                     right = this._stock._margin.left,
                     left = this._stock._margin.right;
 
-                return (width - right - left) / 8;
+                return (width - right - left) / 15;
             }
 
             getXdomain():any[] {
@@ -121,8 +124,8 @@ module Asgard {
                 var minDate:Date = date[0], maxDate:Date = date[1];
 
                 return [
-                    minDate.setMinutes(minDate.getMinutes() - 15),
-                    maxDate.setMinutes(maxDate.getMinutes() + 15)
+                    minDate.setMinutes(minDate.getMinutes() - 2),
+                    maxDate.setMinutes(maxDate.getMinutes() + 2)
                 ];
             }
 
@@ -135,6 +138,40 @@ module Asgard {
                 }
 
                 return this.getMinAndMaxPrice(data);
+
+            }
+
+            getNearDataByDate(date:Date){
+
+                var data = this._data[this._defaultName],
+                    index;
+
+
+                data.forEach((d:DataInterface,i:number):void => {
+
+                    if( index === undefined && d.start < date){
+                        index = i;
+                    }
+                });
+
+                if(index === undefined){
+                    return data[data.length - 1];
+                }
+
+                var next = index - 1;
+
+                if(next < 0){
+                    return data[index];
+                }
+
+                var minData = data[index],
+                    maxData = data[next];
+
+                if(date - minData.start < maxData.start - date){
+                    return minData;
+                }else{
+                    return maxData;
+                }
 
             }
 
@@ -224,7 +261,7 @@ module Asgard {
                     container = this._stock
                         .getContainer('baseSvg')
                         .insert('g', ':first-child')
-                        .classed(Util.generateClassName(this, 'component'), true)
+                        .classed(Util.generateClassName(this), true)
                         .classed(this._name, true);
 
                     this._stock.addContainer(this._name, container);
@@ -272,7 +309,7 @@ module Asgard {
                     .innerTickSize(0)
                     .outerTickSize(0)
                     .tickPadding(10)
-                    .ticks(8)
+                    .ticks(6)
 
 
                 var key, values;
@@ -420,8 +457,10 @@ module Asgard {
 
             draw():ComponentInterface {
 
-                var selection:any = this._stock.getContainer(this._name)
-                    .selectAll('line').data(this._getTicks(this._orient));
+                var selection:any = this._stock
+                                        .getContainer(this._name)
+                                        .selectAll('line')
+                                        .data(this._getTicks(this._orient));
 
                 if (selection.empty()) {
                     selection = selection.enter().append('line');
@@ -431,7 +470,6 @@ module Asgard {
                     } else {
                         selection.enter().append('line');
                     }
-
                 }
 
                 switch (this._orient) {
@@ -454,6 +492,75 @@ module Asgard {
             }
 
 
+        }
+
+        export class Tips extends BaseComponent {
+
+            // tips 需要显示在最前面
+            _createContainer():ComponentInterface {
+
+                var container = this._stock.getContainer(this._name);
+
+                if (!container) {
+                    container = this._stock
+                        .getContainer('baseSvg')
+                        .insert('g')
+                        .classed(Util.generateClassName(this), true)
+                        .classed(this._name, true);
+
+                    this._stock.addContainer(this._name, container);
+                }
+
+                return this;
+            }
+
+            draw():ComponentInterface {
+
+                var stock = this._stock,
+                    xLine = stock.getContainer(this._name + '-x'),
+                    yLine = stock.getContainer(this._name + '-y'),
+                    xClassName = Util.generateClassName(this, 'x'),
+                    yClassName = Util.generateClassName(this, 'y');
+
+
+                if (!xLine){
+                    xLine = stock.getContainer(this._name).append('line').classed(xClassName, true);
+                    stock.addContainer(this._name + '-x',xLine);
+                }
+
+                if (!yLine) {
+                    yLine = stock.getContainer(this._name).append('line').classed(yClassName, true);
+                    stock.addContainer(this._name + '-y',yLine);
+                }
+
+                this._stock.getContainer('baseSvg').on('mousemove', function () {
+
+                    var x = d3.mouse(this)[0],
+                        y = d3.mouse(this)[1],
+                        margin = stock.getMargin(),
+                        width = stock.getWidth(),
+                        height = stock.getHeight();
+
+                    if (x < margin.left || x > (margin.left + width) || y < margin.top || y > (margin.top + height)) {
+                        xLine.classed(stock.getHiddenClass(), true);
+                        yLine.classed(stock.getHiddenClass(), true);
+                        return;
+                    }
+
+                    var date = stock._xScale.invert(x - margin.left);
+
+                    var nearData = stock.getDataContainer().getNearDataByDate(date);
+
+                    var nearDataX = stock._xScale(nearData.start) + margin.left;
+
+                    xLine.attr('x1', 0).attr('y1', y).attr('x2', width).attr('y2', y).classed(stock.getHiddenClass(), false).attr('transform', 'translate(' + margin.left + ',0)');
+                    yLine.attr('x1', nearDataX).attr('y1', 0).attr('x2', nearDataX).attr('y2', height).classed(stock.getHiddenClass(), false).attr('transform', 'translate(0,' + margin.top + ')');
+
+                });
+
+                return this;
+
+            }
         }
     }
 
@@ -496,8 +603,8 @@ module Asgard {
                 if (!container) {
                     container = this._stock
                         .getContainer('dataClip')
-                        .insert('g')
-                        .classed(Util.generateClassName(this, 'chart'), true)
+                        .append('g')
+                        .classed(Util.generateClassName(this), true)
                         .classed(this._name, true);
                 }
                 this._stock.addContainer(this._name, container);
@@ -560,7 +667,6 @@ module Asgard {
                         return data[this._priceSource];
                 }
 
-
             }
 
             _parseOptions(options:StockChartOptionsInterface):ChartInterface {
@@ -570,7 +676,7 @@ module Asgard {
                 return this;
             }
 
-            _getCoordinate(prevData:StockData.DataInterface, currentData:StockData.DataInterface):Object[] {
+            _getSvgCoordinate(prevData:StockData.DataInterface, currentData:StockData.DataInterface):Object[] {
 
                 var prevDate,
                     prevPrice,
@@ -594,25 +700,33 @@ module Asgard {
                 }];
             }
 
-            draw():ChartInterface {
-
-                var line = d3.svg.line().x(function (d) {
+            _createSvg():D3.Svg.Line{
+                return d3.svg.line().x(function (d) {
                     return d.x;
                 }).y(function (d) {
                     return d.y;
                 });
+            }
 
-                var data = this._stock.getDataContainer().getData(this._dataName);
 
-                var selection:any = this._stock.getContainer(this._name).selectAll('path').data(data);
+            draw():ChartInterface {
+
+                var svg = this._createSvg(),
+                    data = this._stock.getDataContainer().getData(this._dataName),
+                    selection:any = this._stock.getContainer(this._name).selectAll('path').data(data);
 
                 if (selection.empty()) {
                     selection = selection.enter().append('path');
+                } else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    } else {
+                        selection.enter().append('path');
+                    }
                 }
 
-
                 selection.attr('d', (d:StockData.DataInterface, i:number) => {
-                    return line(this._getCoordinate(data[i + 1], d));
+                    return svg(this._getSvgCoordinate(data[i + 1], d));
                 });
 
                 return this;
@@ -622,55 +736,147 @@ module Asgard {
 
         export class Area extends Line {
 
-            draw():ChartInterface {
+            _createSvg():D3.Svg.Area{
 
-                var area = d3.svg.area().x((d) => {
+                var yScale = this._stock.getYScale();
+
+                return d3.svg.area().x((d):number => {
                     return d.x;
-                }).y0(this._stock.getYScale()(0)).y1((d) => {
+                }).y0(yScale(0)).y1((d):number => {
                     return d.y;
                 });
-
-                var data = this._stock.getDataContainer().getData(this._dataName);
-
-                var selection:any = this._stock.getContainer(this._name).selectAll('path').data(data);
-
-                if (selection.empty()) {
-                    selection = selection.enter().append('path');
-                }
-
-                selection.attr('d', (d:StockData.DataInterface, i:number) => {
-                    return area(this._getCoordinate(data[i + 1], d));
-
-                });
-
-                return this;
             }
+
         }
 
         export class Ohlc extends BaseChart {
-            _isUp(d:StockData.DataInterface):boolean {
-                return d.close > d.open || d.close === d.open;
-            }
-
-            _isDown(d:StockData.DataInterface):boolean {
-                return d.close < d.open;
-            }
-
-        }
-
-
-        export class CandleStick extends Ohlc {
 
             _rectWidth:number;
 
             _parseOptions(options:StockChartOptionsInterface):ChartInterface {
 
                 this._rectWidth = options['rectWidth'] || 4;
-
                 return this;
             }
 
-            _highLowlineValue() {
+            getZoomRectWidth():number {
+
+                var scale = 1;
+
+                if (d3.event) {
+                    scale = d3.event.scale;
+                }
+
+                scale = Math.max(1, scale);
+                scale = Math.min(4, scale);
+
+                return scale * this._rectWidth;
+            }
+
+
+            setRectWidth(rectWidth:number):ChartInterface{
+                this._rectWidth = rectWidth;
+                return this;
+            }
+
+            getRectWidth():number{
+                return this._rectWidth;
+            }
+
+            _isUp(d:StockData.DataInterface):boolean {
+                return d.close > d.open;
+            }
+
+            _isDown(d:StockData.DataInterface):boolean {
+                return d.close < d.open;
+            }
+
+            _isConsolidation(d:StockData.DataInterface):boolean {
+                return d.close === d.open;
+            }
+        }
+
+        export class Candle extends Ohlc {
+
+            _drawHighLowLine():ChartInterface{
+
+                var selection:any = this._stock.getContainer(this._name)
+                    .selectAll('path')
+                    .data(
+                        this._stock.getDataContainer().getData(this._dataName)
+                        ,(d:StockData.DataInterface):number => {
+                            return d.start;
+                        }
+                );
+
+                if (selection.empty()) {
+                    selection = selection.enter().append('path');
+                } else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    } else {
+                        selection.enter().append('path');
+                    }
+                }
+
+                selection.attr('d', this._highLowline()).classed(Util.generateClassName(this,'line'),true);
+                return this;
+            }
+
+            _drawCandleRect():ChartInterface{
+                var selection:any = this._stock.getContainer(this._name)
+                    .selectAll('rect')
+                    .data(
+                    this._stock.getDataContainer().getData(this._dataName),
+                    (d:StockData.DataInterface):number=> {
+                        return d.start;
+                    }
+                );
+
+                if (selection.empty()) {
+                    selection = selection.enter().append('rect');
+                } else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    } else {
+                        selection.enter().append('rect');
+                    }
+                }
+
+                var xScale = this._stock.getXScale(),
+                    yScale = this._stock.getYScale(),
+                    RectWidth = this.getZoomRectWidth();
+
+                selection
+                    .attr('x', (d:StockData.DataInterface):number => {
+                        return xScale(new Date(d.start)) - RectWidth / 2;
+                    })
+                    .attr('y', (d:StockData.DataInterface):number => {
+                        return this._isUp(d) ? yScale(d.close) : yScale(d.open);
+                    })
+                    .attr('width', RectWidth)
+                    .attr('height', ((d:StockData.DataInterface):number =>{
+                        var height = this._isUp(d) ? yScale(d.open) - yScale(d.close) : yScale(d.close) - yScale(d.open);
+
+                        return Math.max(height, 1);
+                    }))
+                    .classed(Util.generateClassName(this,'rect'),true)
+                    .classed(Util.generateClassName(this,'up'), this._isUp)
+                    .classed(Util.generateClassName(this,'down'),this._isDown)
+                    .classed(Util.generateClassName(this,'consolidation'),this._isConsolidation);
+                return this;
+            }
+
+            draw():ChartInterface {
+
+                this._drawHighLowLine();
+                this._drawCandleRect();
+
+                return this;
+
+            }
+
+            _highLowline() {
                 var d3Line = d3.svg.line()
                         .x((d:{x:number;y:number}) => {
                             return d.x;
@@ -682,7 +888,7 @@ module Asgard {
                     yScale = this._stock._yScale;
 
 
-                return (d:StockData.DataInterface) => {
+                return (d:StockData.DataInterface):any => {
                     return d3Line([
                         {
                             x: xScale(new Date(d.start)),
@@ -695,266 +901,311 @@ module Asgard {
                     ]);
                 };
             }
+        }
 
-            getZoomRectWidth():number {
+        export class HollowCandle extends Candle{
 
-                var scale = 1;
+            _drawHighLine():ChartInterface{
 
-                if (d3.event) {
-                    scale = d3.event.scale;
-                }
-
-                scale = Math.max(1, scale);
-                scale = Math.min(3, scale);
-
-                return scale * this._rectWidth;
-            }
-
-            draw():ChartInterface {
-
-
-                // line
-                var selection:any = this._stock.getContainer(this._name).selectAll('path').data(this._stock.getDataContainer().getData(this._dataName), (d:StockData.DataInterface):number => {
-                    return d.start;
-                });
+                var className=Util.generateClassName(this,'high-line'),
+                    selection:any = this._stock.getContainer(this._name)
+                    .selectAll('path.'+className)
+                    .data(
+                    this._stock.getDataContainer().getData(this._dataName)
+                    ,(d:StockData.DataInterface):number => {
+                        return d.start;
+                    }
+                );
 
                 if (selection.empty()) {
                     selection = selection.enter().append('path');
+                } else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    } else {
+                        selection.enter().append('path');
+                    }
                 }
 
-                selection.attr('d', this._highLowlineValue());
+                selection.attr('d', this._highLine()).classed(className,true);
+                return this;
+            }
+
+            _lowLine(){
+                var d3Line = d3.svg.line()
+                        .x((d:{x:number;y:number}) => {
+                            return d.x;
+                        })
+                        .y((d:{x:number;y:number}) => {
+                            return d.y;
+                        }),
+                    xScale = this._stock._xScale,
+                    yScale = this._stock._yScale;
 
 
-                // candle
-                var selection:any = this._stock.getContainer(this._name).selectAll('rect').data(this._stock.getDataContainer().getData(this._dataName), (d:StockData.DataInterface):number=> {
-                    return d.start;
-                });
+                return (d:StockData.DataInterface):any => {
+                    return d3Line([
+                        {
+                            x: xScale(new Date(d.start)),
+                            y: yScale(Math.min(d.close,d.open))
+                        },
+                        {
+                            x: xScale(new Date(d.start)),
+                            y: yScale(d.low)
+                        }
+                    ]);
+                };
+            }
+            _highLine(){
+                var d3Line = d3.svg.line()
+                        .x((d:{x:number;y:number}) => {
+                            return d.x;
+                        })
+                        .y((d:{x:number;y:number}) => {
+                            return d.y;
+                        }),
+                    xScale = this._stock._xScale,
+                    yScale = this._stock._yScale;
+
+
+                return (d:StockData.DataInterface):any => {
+                    return d3Line([
+                        {
+                            x: xScale(new Date(d.start)),
+                            y: yScale(d.high)
+                        },
+                        {
+                            x: xScale(new Date(d.start)),
+                            y: yScale(Math.max(d.close,d.open))
+                        }
+                    ]);
+                };
+            }
+
+            _drawLowLine():ChartInterface{
+
+                var className = Util.generateClassName(this,'low-line'),
+                    selection:any = this._stock.getContainer(this._name)
+                    .selectAll('path.'+className)
+                    .data(
+                    this._stock.getDataContainer().getData(this._dataName)
+                    ,(d:StockData.DataInterface):number => {
+                        return d.start;
+                    }
+                );
 
                 if (selection.empty()) {
-                    selection = selection.enter().append('rect');
+                    selection = selection.enter().append('path');
+                } else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    } else {
+                        selection.enter().append('path');
+                    }
                 }
 
-                var xScale = this._stock.getXScale(),
-                    yScale = this._stock.getYScale(),
-                    RectWidth = this.getZoomRectWidth();
+                selection.attr('d', this._lowLine()).classed(className,true);
 
+                return this;
+            }
+            draw():ChartInterface {
 
-                selection.attr('x', (d:StockData.DataInterface):number => {
-                    return xScale(new Date(d.start)) - RectWidth / 2;
-                }).attr('y', (d:StockData.DataInterface):number => {
-                    return this._isUp(d) ? yScale(d.close) : yScale(d.open);
-                }).attr('width', RectWidth)
-                    .attr('height', ((d) => {
-                        var height = this._isUp(d) ? yScale(d.open) - yScale(d.close) : yScale(d.close) - yScale(d.open);
-
-                        return Math.max(height, 1);
-                    })).classed({
-                        'up-day': this._isUp,
-                        'down-day': this._isDown
-                    });
-
+                this._drawHighLine();
+                this._drawLowLine();
+                this._drawCandleRect();
 
                 return this;
 
             }
         }
 
+        export class Bars extends Ohlc{
 
-        // @todo ....
-        //export class HighLowRect extends BaseChart {
-        //
-        //    _rectWidth:number;
-        //    _upClassName:string;
-        //    _downClassName:string;
-        //
-        //    _isUp(d:StockData.DataInterface):boolean {
-        //        return d['close'] > d['open'] || d.close === d.open;
-        //    }
-        //
-        //    _isDown(d:StockData.DataInterface):boolean {
-        //        return d['close'] < d['open'];
-        //    }
-        //
-        //    _parseOptions(options:StockChartOptionsInterface):ChartInterface {
-        //
-        //        this._rectWidth = options['rectWidth'] || 2;
-        //
-        //        this._downClassName = options['downClassName'] || 'down-rect';
-        //        this._upClassName = options['upClassName'] || 'up-rect';
-        //
-        //        return this;
-        //    }
-        //
-        //
-        //    setUpClassName(className:string):ChartInterface{
-        //        this._upClassName = className;
-        //        return this;
-        //    }
-        //
-        //    setDownClassName(className:string):ChartInterface{
-        //        this._downClassName = className;
-        //        return this;
-        //    }
-        //
-        //    setRectWidth(rectWidth:number):ChartInterface{
-        //        this._rectWidth = rectWidth;
-        //        return this;
-        //    }
-        //
-        //    getRectWidth():number {
-        //        return this._rectWidth;
-        //    }
-        //
-        //    getZoomRectWidth():number{
-        //        var scale = 1;
-        //
-        //        if (d3.event) {
-        //            scale = d3.event.scale;
-        //        }
-        //
-        //        scale = Math.max(1, scale);
-        //        scale = Math.min(3, scale);
-        //
-        //        return scale * this._rectWidth;
-        //    }
-        //
-        //    draw():ChartInterface {
-        //
-        //        var selection:any = this._stock.getContainer(this._name).selectAll('rect').data(this._stock.getDataContainer().getData(this._dataName), (d:StockData.DataInterface):number => {
-        //            return d.start;
-        //        });
-        //
-        //        if (selection.empty()) {
-        //            selection = selection.enter().append('rect');
-        //        }
-        //
-        //        var xScale = this._stock.getXScale(),
-        //            yScale = this._stock.getYScale(),
-        //            zoomRectWidth = this.getZoomRectWidth(),
-        //            classed = {};
-        //
-        //        classed[this._upClassName] = this._isUp;
-        //        classed[this._downClassName] = this._isDown;
-        //
-        //        selection.attr('x', (d:StockData.DataInterface)=>{
-        //            return xScale(new Date(d.start)) - zoomRectWidth/2;
-        //        }).attr('y',  (d:StockData.DataInterface)=>{
-        //            return yScale(d.high);
-        //        }).attr('width', zoomRectWidth)
-        //        .attr('height', (d:StockData.DataInterface)=>{
-        //            return Math.max(yScale(d.low) - yScale(d.high),1);
-        //        }).classed(classed);
-        //
-        //        return this;
-        //    }
-        //}
-        //
-        //export class Ohlc extends HighLowRect {
-        //
-        //    _rectHeight:number;
-        //
-        //    draw():ChartInterface {
-        //        super.draw();
-        //        this._drawOpenRect();
-        //        this._drawCloseRect();
-        //        return this;
-        //    }
-        //
-        //    _parseOptions(options:StockChartOptionsInterface):ChartInterface {
-        //
-        //        super._parseOptions(options);
-        //
-        //        this._rectHeight = options['rectHeight'] || 10;
-        //        return this;
-        //    }
-        //
-        //    _drawCloseRect():ChartInterface {
-        //
-        //        var className = Util.generateClassName(this, 'close'),
-        //            xScale = this._stock.getXScale(),
-        //            yScale = this._stock.getYScale(),
-        //            rectWidth = this.getZoomRectWidth(),
-        //            superRectWidth = super.getZoomRectWidth(),
-        //            classed = {};
-        //
-        //        classed[this._upClassName] = this._isUp;
-        //        classed[this._downClassName] = this._isDown;
-        //
-        //        var selection:any = this._stock.getContainer(this._name).selectAll('rect.' + className).data(this._stock.getDataContainer().getData(this._dataName), (d:StockData.DataInterface):number => {
-        //            return d.start;
-        //        });
-        //
-        //        if (selection.empty()) {
-        //            selection = selection.enter().append('rect');
-        //        }
-        //
-        //        selection.attr('x', (d:StockData.DataInterface):number=> {
-        //
-        //            var x = xScale(new Date(d.start));
-        //
-        //            if (this._isUp(d)) {
-        //                x -= rectWidth + superRectWidth/2;
-        //            }else{
-        //                x += superRectWidth/2;
-        //            }
-        //
-        //            return x;
-        //
-        //        }).attr('y', (d) => {
-        //            return (this._isUp(d) ? yScale(d.open) : yScale(d.close)) - this._rectHeight;
-        //        }).attr('width', rectWidth)
-        //            .attr('height', this._rectHeight)
-        //            .classed(className, true).classed(classed);
-        //
-        //        return this;
-        //    }
-        //
-        //    _drawOpenRect():ChartInterface {
-        //
-        //        var className = Util.generateClassName(this, 'open'),
-        //            xScale = this._stock.getXScale(),
-        //            yScale = this._stock.getYScale(),
-        //            rectWidth = this.getZoomRectWidth(),
-        //            superRectWidth = super.getZoomRectWidth(),
-        //            classed = {};
-        //
-        //        classed[this._upClassName] = this._isUp;
-        //        classed[this._downClassName] = this._isDown;
-        //
-        //        var selection:any = this._stock.getContainer(this._name).selectAll('rect.' + className).data(this._stock.getDataContainer().getData(this._dataName), (d:StockData.DataInterface):number => {
-        //            return d.start;
-        //        });
-        //
-        //        if (selection.empty()) {
-        //            selection = selection.enter().append('rect');
-        //        }
-        //
-        //        selection.attr('x', (d) => {
-        //
-        //            var x = xScale(new Date(d.start));
-        //
-        //            if (this._isDown(d)) {
-        //                x -= rectWidth + superRectWidth/2;
-        //            }else{
-        //                x += superRectWidth/2;
-        //            }
-        //
-        //            return x;
-        //        }).attr('y', (d) => {
-        //            return (this._isDown(d) ? yScale(d.open) : yScale(d.close)) - this._rectHeight;
-        //        }).attr('width', rectWidth)
-        //            .attr('height', this._rectHeight)
-        //            .classed(className, true)
-        //            .classed(classed);;
-        //
-        //        return this;
-        //    }
-        //
-        //}
+            _drawCloseRect():ChartInterface{
 
+                var className = Util.generateClassName(this,'close-rect'),
+                    selection:any = this._stock.getContainer(this._name)
+                        .selectAll('rect.'+className)
+                        .data(
+                        this._stock.getDataContainer().getData(this._dataName),
+                        (d:StockData.DataInterface):number=> {
+                            return d.start;
+                        }
+                    );
+
+                if (selection.empty()) {
+                    selection = selection.enter().append('rect');
+                } else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    } else {
+                        selection.enter().append('rect');
+                    }
+                }
+
+                var xScale = this._stock.getXScale(),
+                    yScale = this._stock.getYScale(),
+                    RectWidth = this.getZoomRectWidth();
+
+                selection
+                    .attr('x', (d:StockData.DataInterface):number => {
+
+                        var x = xScale(new Date(d.start));
+
+                        if(this._isUp(d)){
+                            x -= RectWidth + RectWidth/2;
+                        }else{
+                            x -= RectWidth - RectWidth/2;
+                        }
+                        return x;
+
+
+
+                    })
+                    .attr('y', (d:StockData.DataInterface):number => {
+
+                        var y;
+
+                        if(this._isUp(d)){
+                            y = yScale(d.open);
+                        }else{
+                            y = yScale(d.close);
+                        }
+
+
+                        return y;
+
+                    })
+                    .attr('width', RectWidth * 2)
+                    .attr('height', ((d:StockData.DataInterface):number =>{
+                        return RectWidth;
+                    }))
+                    .classed(className,true)
+                    .classed(Util.generateClassName(this,'up'), this._isUp)
+                    .classed(Util.generateClassName(this,'down'),this._isDown)
+                    .classed(Util.generateClassName(this,'consolidation'),this._isConsolidation);
+                return this;
+
+            }
+
+            _drawOpenRect():ChartInterface{
+
+                var className = Util.generateClassName(this,'open-rect'),
+                    selection:any = this._stock.getContainer(this._name)
+                        .selectAll('rect.'+className)
+                        .data(
+                        this._stock.getDataContainer().getData(this._dataName),
+                        (d:StockData.DataInterface):number=> {
+                            return d.start;
+                        }
+                    );
+
+                if (selection.empty()) {
+                    selection = selection.enter().append('rect');
+                } else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    } else {
+                        selection.enter().append('rect');
+                    }
+                }
+
+                var xScale = this._stock.getXScale(),
+                    yScale = this._stock.getYScale(),
+                    RectWidth = this.getZoomRectWidth();
+
+                selection
+                    .attr('x', (d:StockData.DataInterface):number => {
+
+                        var x = xScale(new Date(d.start));
+
+                        if(this._isDown(d)){
+                            x -= RectWidth + RectWidth/2;
+                        }else{
+                            x -= RectWidth - RectWidth/2;
+                        }
+                        return x;
+
+                    })
+                    .attr('y', (d:StockData.DataInterface):number => {
+
+                        var y;
+
+                        if(this._isDown(d)){
+                            y = yScale(d.open);
+                        }else{
+                            y = yScale(d.close);
+                        }
+
+
+                        return y;
+                    })
+                    .attr('width', RectWidth * 2)
+                    .attr('height', ((d:StockData.DataInterface):number =>{
+                        return RectWidth;
+                    }))
+                    .classed(className,true)
+                    .classed(Util.generateClassName(this,'up'), this._isUp)
+                    .classed(Util.generateClassName(this,'down'),this._isDown)
+                    .classed(Util.generateClassName(this,'consolidation'),this._isConsolidation);
+                return this;
+
+            }
+
+            _drawHighLowRect():ChartInterface{
+                var className = Util.generateClassName(this,'high-low-rect'),
+                    selection:any = this._stock.getContainer(this._name)
+                    .selectAll('rect.'+className)
+                    .data(
+                    this._stock.getDataContainer().getData(this._dataName),
+                    (d:StockData.DataInterface):number=> {
+                        return d.start;
+                    }
+                );
+
+                if (selection.empty()) {
+                    selection = selection.enter().append('rect');
+                } else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    } else {
+                        selection.enter().append('rect');
+                    }
+                }
+
+                var xScale = this._stock.getXScale(),
+                    yScale = this._stock.getYScale(),
+                    RectWidth = this.getZoomRectWidth();
+
+                selection
+                    .attr('x', (d:StockData.DataInterface):number => {
+                        return xScale(new Date(d.start)) - RectWidth / 2;
+                    })
+                    .attr('y', (d:StockData.DataInterface):number => {
+                        return yScale(d.high);
+                    })
+                    .attr('width', RectWidth)
+                    .attr('height', ((d:StockData.DataInterface):number =>{
+                        var height = yScale(d.low) - yScale(d.high);
+                        return Math.max(height, 1);
+                    }))
+                    .classed(className,true)
+                    .classed(Util.generateClassName(this,'up'), this._isUp)
+                    .classed(Util.generateClassName(this,'down'),this._isDown)
+                    .classed(Util.generateClassName(this,'consolidation'),this._isConsolidation);
+                return this;
+            }
+
+            draw():ChartInterface{
+
+                this._drawHighLowRect();
+                this._drawOpenRect();
+                this._drawCloseRect();
+                return this;
+            }
+        }
 
     }
-
 
     export interface StockMarginOptionsInterface {
         left?:number;
@@ -995,6 +1246,7 @@ module Asgard {
         _isZoom:boolean;
         _zoom:D3.Behavior.Zoom;
         _sync:Stock[] = [];
+        _hiddenClass:string = name + '-hide';
 
         constructor(selection:any, options:any) {
 
@@ -1016,10 +1268,17 @@ module Asgard {
 
         _initZoom():Stock {
             this._zoom = d3.behavior.zoom();
-            this._zoom.scaleExtent([-2, 14]);
+
+            var scaleExtend;
+            switch (this._interval){
+                case '1':
+                    scaleExtend = [1,3];
+                    break;
+            }
+            this._zoom.scaleExtent(scaleExtend);
+
             this.getContainer('baseSvg').call(this._zoom);
-            this.zoom(():void=> {
-            })
+            this.zoom(():void=> {});
             return this;
         }
 
@@ -1252,6 +1511,10 @@ module Asgard {
 
         getDataContainer():StockData.DataContainer {
             return this._dataContainer;
+        }
+
+        getHiddenClass():string{
+            return this._hiddenClass;
         }
 
     }
