@@ -212,7 +212,7 @@ var Asgard;
                 }
                 // 如果左边的值找不到，可能当前时间已经是最后条数据了,直接放回最后条数据
                 if (left === undefined) {
-                    return data[data.length - 1];
+                    return data[l - 1];
                 }
                 // 找当前时间的右边值
                 var right = left - 1;
