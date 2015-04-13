@@ -2,25 +2,86 @@
 
 module Asgard {
 
-    export var name = 'asgard';
+    /**
+     * 库名
+     *
+     * @type {string}
+     */
+    export var name:string = 'asgard';
 
-    export var version = '0.0.1';
+    /**
+     * 版本号
+     * @type {string}
+     */
+    export var version:string = '0.0.1';
 
+    /**
+     * Stock Margin Options 接口
+     */
+    export interface StockMarginOptionsInterface {
+        left?:number;
+        top?:number;
+        bottom?:number;
+        right?:number
+    }
+
+    /**
+     * Stock Chart Options 接口
+     */
+    export interface StockChartOptionsInterface {
+        name:string;
+        type:string;
+        dataName:string;
+    }
+
+    /**
+     * Stock Component Options 接口
+     */
+    export interface StockComponentOptionsInterface {
+        name:string;
+        type:string;
+    }
+
+    /**
+     * Stock Data Options 接口
+     */
+    export interface StockDataOptionsInterface {
+        name:string;
+        data:any[];
+        isDefault?:boolean;
+    }
+
+    /**
+     * Util Module
+     */
     export module Util {
 
         var toString = Object.prototype.toString;
 
+        /**
+         * 判断是否是数组
+         * @param value
+         * @returns {boolean}
+         */
         export function isArray(value:any):boolean {
             return toString.call(value) === '[object Array]';
         }
 
+        /**
+         * 生成className
+         * @param object
+         * @param suffix
+         * @returns {string}
+         */
         export function generateClassName(object:Object, suffix?:string):string {
-
-            suffix = suffix ? '-' + suffix : '';
-
-            return name.toLowerCase() + '-' + getClassName(object).toLowerCase()  + suffix;
+            return name.toLowerCase() + '-' + getClassName(object).toLowerCase() + (suffix ? '-' + suffix : '');
         }
 
+        /**
+         * 获取类名
+         * @param obj
+         * @returns {string}
+         */
         export function getClassName(obj:any):string {
             if (obj && obj.constructor) {
                 var strFun = obj.constructor.toString();
@@ -31,14 +92,25 @@ module Asgard {
             return typeof(obj);
         }
 
+        /**
+         * 首字母大写
+         * @param str
+         * @returns {string}
+         */
         export function capitalize(str:string):string {
-            return String(str.charAt(0)).toUpperCase() +
-                String(str.substr(1));
+            return String(str.charAt(0)).toUpperCase() + String(str.substr(1));
         }
     }
 
+
+    /**
+     * Stock Data Module
+     */
     export module StockData {
 
+        /**
+         * Data 接口
+         */
         export interface DataInterface {
             start:number;
             end:number;
@@ -49,18 +121,32 @@ module Asgard {
             price:number;
         }
 
+        /**
+         * Data 容器
+         */
         export class DataContainer {
+
             _stock:Stock;
             _defaultName:string;
             _originData:{[name:string]:Object[]} = {};
             _data:{[name:string]:DataInterface[]} = {};
 
+            /**
+             * Constructor
+             *
+             * @param stock
+             */
             constructor(stock:Stock) {
                 this._stock = stock;
             }
 
+            /**
+             * 默认的格式化数据
+             *
+             * @param data
+             * @returns {{start: number, end: number, high: any, low: any, open: any, close: any, price: any, volume: any}[]}
+             */
             format(data:Object[]):DataInterface[] {
-
                 return data.map((d) => {
                     return {
                         start: d['start'] * 1000,
@@ -75,6 +161,14 @@ module Asgard {
                 });
             }
 
+            /**
+             * 添加一个数据
+             *
+             * 会保留原始数据和格式化后数据
+             *
+             * @param options
+             * @returns {Asgard.StockData.DataContainer}
+             */
             addData(options:StockDataOptionsInterface):DataContainer {
 
                 if (options.isDefault) {
@@ -85,21 +179,38 @@ module Asgard {
                     this._defaultName = options.name;
                 }
 
-
                 this._originData[options.name] = options.data;
                 this._data[options.name] = this.format(options.data);
                 return this;
             }
 
+            /**
+             * 获取数据
+             *
+             * @param name
+             * @returns {DataInterface[]}
+             */
             getData(name:string):DataInterface[] {
                 return this._data[name];
             }
 
+            /**
+             * 获取原始数据
+             *
+             * @param name
+             * @returns {Object[]}
+             */
             getOriginData(name:string):Object[] {
                 return this._originData[name];
             }
 
-
+            /**
+             * 获取数据显示的数量
+             *
+             * 如果Stock可进行缩放，无需将所有数据显示在可视范围内
+             *
+             * @returns {number}
+             */
             getShowCount():number {
 
                 var width = this._stock._width,
@@ -109,7 +220,16 @@ module Asgard {
                 return (width - right - left) / 15;
             }
 
-            getXdomain():any[] {
+            /**
+             * 获取x的domain
+             *
+             * x轴一般对应的是Date,Stock限制只能有相同的interval的数据，所以不需要考虑多个数据源的domain,
+             * 使用默认的数据，如果可以缩放，截取下数据,因为不需要将数据全部展现出来
+             * 为了让数据显示不超出可视范围，数据计算出来的范围进行合适的修改
+             *
+             * @returns {Date[]}
+             */
+            getXdomain():Date[] {
 
                 var data = this.getData(this._defaultName);
 
@@ -121,86 +241,140 @@ module Asgard {
                     return new Date(d.start);
                 }));
 
-                var minDate:Date = date[0], maxDate:Date = date[1];
+                var minDate:Date = date[0],
+                    maxDate:Date = date[1];
 
-                return [
-                    minDate.setMinutes(minDate.getMinutes() - 2),
-                    maxDate.setMinutes(maxDate.getMinutes() + 2)
-                ];
+                minDate.setMinutes(minDate.getMinutes() - 2);
+                maxDate.setMinutes(maxDate.getMinutes() + 2);
+
+                return [minDate, maxDate];
             }
 
+            /**
+             * 获取y的domain
+             *
+             * 通过xdomain,来获取数据范围，然后获取可是范围内的最高和最低值
+             *
+             * @todo: 如果数据有多个，并且价格差距很大，需要考虑以%的形式
+             *
+             * @returns {number[]}
+             */
             getYdomain():number[] {
 
-                var data = this.getData(this._defaultName);
+                var xDomain = this._stock.getXScale().domain(),
+                    data = this._stock.getDataContainer().getDataByDateRange(xDomain[0], xDomain[1]);
 
                 if (this._stock.isZoom()) {
-                    data = Array.prototype.slice.apply(data, [0, this.getShowCount()]);
+
+                    for (var name in data) {
+                        data[name] = Array.prototype.slice.apply(data[name], [0, this.getShowCount()]);
+                    }
+
                 }
 
                 return this.getMinAndMaxPrice(data);
 
             }
 
-            getNearDataByDate(date:Date){
 
-                var data = this._data[this._defaultName],
-                    index;
+            /**
+             * 根据时间获取最接近的那条数据
+             *
+             * @param date
+             * @returns {Asgard.StockData.DataInterface}
+             */
+            getNearDataByDate(date:Date) {
+
+                var data:DataInterface[] = this._data[this._defaultName],
+                    l:number = data.length,
+                    i:number,
+                    left:number,
+                    time = date.getTime();
 
 
-                data.forEach((d:DataInterface,i:number):void => {
-
-                    if( index === undefined && d.start < date){
-                        index = i;
+                // 数据是从新到旧,找比当前时间小的时间，找到说明当前时间左边的值找到
+                for (i = 0; i < l; i++) {
+                    if (left === undefined && data[i].start < time) {
+                        left = i;
+                        break;
                     }
-                });
+                }
 
-                if(index === undefined){
+                // 如果左边的值找不到，可能当前时间已经是最后条数据了,直接放回最后条数据
+                if (left === undefined) {
                     return data[data.length - 1];
                 }
 
-                var next = index - 1;
+                // 找当前时间的右边值
+                var right = left - 1;
 
-                if(next < 0){
-                    return data[index];
+                // 当前已经在最右边了
+                if (right < 0) {
+                    return data[left];
                 }
 
-                var minData = data[index],
-                    maxData = data[next];
+                // 比较左边和右边的数据，哪个比较接近当前时间，则返回哪个
+                var leftData:DataInterface = data[left],
+                    rightData:DataInterface = data[right];
 
-                if(date - minData.start < maxData.start - date){
-                    return minData;
-                }else{
-                    return maxData;
+                if (time - leftData.start < rightData.start - time) {
+                    return leftData;
+                } else {
+                    return rightData;
                 }
 
             }
 
-            getDataByDateRange(gtValue:any, ltValue:any):DataInterface[] {
 
-                var data = [];
+            /**
+             * 获取一个时间范围内的所有数据
+             *
+             * 如果有多个数据，不同数据要区分
+             *
+             * @param gtValue
+             * @param ltValue
+             * @returns {{}}
+             */
+            getDataByDateRange(gtValue:any, ltValue:any):Object {
+
+                var data = {};
 
                 for (var name in this._data) {
+
+                    data[name] = [];
+
                     this._data[name].forEach((d:DataInterface):void=> {
                         if (d.start >= gtValue && d.start <= ltValue) {
-                            data.push(d);
+                            data[name].push(d);
                         }
                     });
                 }
 
                 return data;
-
             }
 
-            getMinAndMaxPrice(data:DataInterface[]):number[] {
+            /**
+             * 获取数据内的最高和最低价格
+             *
+             * @todo:如果数据有多个，需要使用百分比计算
+             *
+             * @param data
+             * @returns {any[]}
+             */
+            getMinAndMaxPrice(data:Object):number[] {
 
-                var min, max, diff;
+                var allData = [], min, max, diff;
 
-                min = d3.min(data, function (d) {
-                    return d['low'];
+                for (var key in data) {
+                    allData = allData.concat(data[key]);
+                }
+
+                min = d3.min(allData, (d:DataInterface):number => {
+                    return d.low;
                 });
 
-                max = d3.max(data, function (d) {
-                    return d['high'];
+                max = d3.max(allData, (d:DataInterface):number => {
+                    return d.high;
                 });
 
                 diff = (max - min) * 0.1;
@@ -458,9 +632,9 @@ module Asgard {
             draw():ComponentInterface {
 
                 var selection:any = this._stock
-                                        .getContainer(this._name)
-                                        .selectAll('line')
-                                        .data(this._getTicks(this._orient));
+                    .getContainer(this._name)
+                    .selectAll('line')
+                    .data(this._getTicks(this._orient));
 
                 if (selection.empty()) {
                     selection = selection.enter().append('line');
@@ -496,7 +670,7 @@ module Asgard {
 
         export class Tips extends BaseComponent {
 
-            // tips 需要显示在最前面
+            // tips 需要显示在最前面，所以重写_createContainer方法
             _createContainer():ComponentInterface {
 
                 var container = this._stock.getContainer(this._name);
@@ -523,14 +697,14 @@ module Asgard {
                     yClassName = Util.generateClassName(this, 'y');
 
 
-                if (!xLine){
+                if (!xLine) {
                     xLine = stock.getContainer(this._name).append('line').classed(xClassName, true);
-                    stock.addContainer(this._name + '-x',xLine);
+                    stock.addContainer(this._name + '-x', xLine);
                 }
 
                 if (!yLine) {
                     yLine = stock.getContainer(this._name).append('line').classed(yClassName, true);
-                    stock.addContainer(this._name + '-y',yLine);
+                    stock.addContainer(this._name + '-y', yLine);
                 }
 
                 this._stock.getContainer('baseSvg').on('mousemove', function () {
@@ -700,7 +874,7 @@ module Asgard {
                 }];
             }
 
-            _createSvg():D3.Svg.Line{
+            _createSvg():D3.Svg.Line {
                 return d3.svg.line().x(function (d) {
                     return d.x;
                 }).y(function (d) {
@@ -736,7 +910,7 @@ module Asgard {
 
         export class Area extends Line {
 
-            _createSvg():D3.Svg.Area{
+            _createSvg():D3.Svg.Area {
 
                 var yScale = this._stock.getYScale();
 
@@ -774,12 +948,12 @@ module Asgard {
             }
 
 
-            setRectWidth(rectWidth:number):ChartInterface{
+            setRectWidth(rectWidth:number):ChartInterface {
                 this._rectWidth = rectWidth;
                 return this;
             }
 
-            getRectWidth():number{
+            getRectWidth():number {
                 return this._rectWidth;
             }
 
@@ -798,15 +972,15 @@ module Asgard {
 
         export class Candle extends Ohlc {
 
-            _drawHighLowLine():ChartInterface{
+            _drawHighLowLine():ChartInterface {
 
                 var selection:any = this._stock.getContainer(this._name)
                     .selectAll('path')
                     .data(
-                        this._stock.getDataContainer().getData(this._dataName)
-                        ,(d:StockData.DataInterface):number => {
-                            return d.start;
-                        }
+                    this._stock.getDataContainer().getData(this._dataName)
+                    , (d:StockData.DataInterface):number => {
+                        return d.start;
+                    }
                 );
 
                 if (selection.empty()) {
@@ -819,11 +993,11 @@ module Asgard {
                     }
                 }
 
-                selection.attr('d', this._highLowline()).classed(Util.generateClassName(this,'line'),true);
+                selection.attr('d', this._highLowline()).classed(Util.generateClassName(this, 'line'), true);
                 return this;
             }
 
-            _drawCandleRect():ChartInterface{
+            _drawCandleRect():ChartInterface {
                 var selection:any = this._stock.getContainer(this._name)
                     .selectAll('rect')
                     .data(
@@ -855,15 +1029,15 @@ module Asgard {
                         return this._isUp(d) ? yScale(d.close) : yScale(d.open);
                     })
                     .attr('width', RectWidth)
-                    .attr('height', ((d:StockData.DataInterface):number =>{
+                    .attr('height', ((d:StockData.DataInterface):number => {
                         var height = this._isUp(d) ? yScale(d.open) - yScale(d.close) : yScale(d.close) - yScale(d.open);
 
                         return Math.max(height, 1);
                     }))
-                    .classed(Util.generateClassName(this,'rect'),true)
-                    .classed(Util.generateClassName(this,'up'), this._isUp)
-                    .classed(Util.generateClassName(this,'down'),this._isDown)
-                    .classed(Util.generateClassName(this,'consolidation'),this._isConsolidation);
+                    .classed(Util.generateClassName(this, 'rect'), true)
+                    .classed(Util.generateClassName(this, 'up'), this._isUp)
+                    .classed(Util.generateClassName(this, 'down'), this._isDown)
+                    .classed(Util.generateClassName(this, 'consolidation'), this._isConsolidation);
                 return this;
             }
 
@@ -903,19 +1077,19 @@ module Asgard {
             }
         }
 
-        export class HollowCandle extends Candle{
+        export class HollowCandle extends Candle {
 
-            _drawHighLine():ChartInterface{
+            _drawHighLine():ChartInterface {
 
-                var className=Util.generateClassName(this,'high-line'),
+                var className = Util.generateClassName(this, 'high-line'),
                     selection:any = this._stock.getContainer(this._name)
-                    .selectAll('path.'+className)
-                    .data(
-                    this._stock.getDataContainer().getData(this._dataName)
-                    ,(d:StockData.DataInterface):number => {
-                        return d.start;
-                    }
-                );
+                        .selectAll('path.' + className)
+                        .data(
+                        this._stock.getDataContainer().getData(this._dataName)
+                        , (d:StockData.DataInterface):number => {
+                            return d.start;
+                        }
+                    );
 
                 if (selection.empty()) {
                     selection = selection.enter().append('path');
@@ -927,11 +1101,11 @@ module Asgard {
                     }
                 }
 
-                selection.attr('d', this._highLine()).classed(className,true);
+                selection.attr('d', this._highLine()).classed(className, true);
                 return this;
             }
 
-            _lowLine(){
+            _lowLine() {
                 var d3Line = d3.svg.line()
                         .x((d:{x:number;y:number}) => {
                             return d.x;
@@ -947,7 +1121,7 @@ module Asgard {
                     return d3Line([
                         {
                             x: xScale(new Date(d.start)),
-                            y: yScale(Math.min(d.close,d.open))
+                            y: yScale(Math.min(d.close, d.open))
                         },
                         {
                             x: xScale(new Date(d.start)),
@@ -956,7 +1130,8 @@ module Asgard {
                     ]);
                 };
             }
-            _highLine(){
+
+            _highLine() {
                 var d3Line = d3.svg.line()
                         .x((d:{x:number;y:number}) => {
                             return d.x;
@@ -976,23 +1151,23 @@ module Asgard {
                         },
                         {
                             x: xScale(new Date(d.start)),
-                            y: yScale(Math.max(d.close,d.open))
+                            y: yScale(Math.max(d.close, d.open))
                         }
                     ]);
                 };
             }
 
-            _drawLowLine():ChartInterface{
+            _drawLowLine():ChartInterface {
 
-                var className = Util.generateClassName(this,'low-line'),
+                var className = Util.generateClassName(this, 'low-line'),
                     selection:any = this._stock.getContainer(this._name)
-                    .selectAll('path.'+className)
-                    .data(
-                    this._stock.getDataContainer().getData(this._dataName)
-                    ,(d:StockData.DataInterface):number => {
-                        return d.start;
-                    }
-                );
+                        .selectAll('path.' + className)
+                        .data(
+                        this._stock.getDataContainer().getData(this._dataName)
+                        , (d:StockData.DataInterface):number => {
+                            return d.start;
+                        }
+                    );
 
                 if (selection.empty()) {
                     selection = selection.enter().append('path');
@@ -1004,10 +1179,11 @@ module Asgard {
                     }
                 }
 
-                selection.attr('d', this._lowLine()).classed(className,true);
+                selection.attr('d', this._lowLine()).classed(className, true);
 
                 return this;
             }
+
             draw():ChartInterface {
 
                 this._drawHighLine();
@@ -1019,13 +1195,13 @@ module Asgard {
             }
         }
 
-        export class Bars extends Ohlc{
+        export class Bars extends Ohlc {
 
-            _drawCloseRect():ChartInterface{
+            _drawCloseRect():ChartInterface {
 
-                var className = Util.generateClassName(this,'close-rect'),
+                var className = Util.generateClassName(this, 'close-rect'),
                     selection:any = this._stock.getContainer(this._name)
-                        .selectAll('rect.'+className)
+                        .selectAll('rect.' + className)
                         .data(
                         this._stock.getDataContainer().getData(this._dataName),
                         (d:StockData.DataInterface):number=> {
@@ -1052,13 +1228,12 @@ module Asgard {
 
                         var x = xScale(new Date(d.start));
 
-                        if(this._isUp(d)){
-                            x -= RectWidth + RectWidth/2;
-                        }else{
-                            x -= RectWidth - RectWidth/2;
+                        if (this._isUp(d)) {
+                            x -= RectWidth + RectWidth / 2;
+                        } else {
+                            x -= RectWidth - RectWidth / 2;
                         }
                         return x;
-
 
 
                     })
@@ -1066,9 +1241,9 @@ module Asgard {
 
                         var y;
 
-                        if(this._isUp(d)){
+                        if (this._isUp(d)) {
                             y = yScale(d.open);
-                        }else{
+                        } else {
                             y = yScale(d.close);
                         }
 
@@ -1077,22 +1252,22 @@ module Asgard {
 
                     })
                     .attr('width', RectWidth * 2)
-                    .attr('height', ((d:StockData.DataInterface):number =>{
+                    .attr('height', ((d:StockData.DataInterface):number => {
                         return RectWidth;
                     }))
-                    .classed(className,true)
-                    .classed(Util.generateClassName(this,'up'), this._isUp)
-                    .classed(Util.generateClassName(this,'down'),this._isDown)
-                    .classed(Util.generateClassName(this,'consolidation'),this._isConsolidation);
+                    .classed(className, true)
+                    .classed(Util.generateClassName(this, 'up'), this._isUp)
+                    .classed(Util.generateClassName(this, 'down'), this._isDown)
+                    .classed(Util.generateClassName(this, 'consolidation'), this._isConsolidation);
                 return this;
 
             }
 
-            _drawOpenRect():ChartInterface{
+            _drawOpenRect():ChartInterface {
 
-                var className = Util.generateClassName(this,'open-rect'),
+                var className = Util.generateClassName(this, 'open-rect'),
                     selection:any = this._stock.getContainer(this._name)
-                        .selectAll('rect.'+className)
+                        .selectAll('rect.' + className)
                         .data(
                         this._stock.getDataContainer().getData(this._dataName),
                         (d:StockData.DataInterface):number=> {
@@ -1119,10 +1294,10 @@ module Asgard {
 
                         var x = xScale(new Date(d.start));
 
-                        if(this._isDown(d)){
-                            x -= RectWidth + RectWidth/2;
-                        }else{
-                            x -= RectWidth - RectWidth/2;
+                        if (this._isDown(d)) {
+                            x -= RectWidth + RectWidth / 2;
+                        } else {
+                            x -= RectWidth - RectWidth / 2;
                         }
                         return x;
 
@@ -1131,9 +1306,9 @@ module Asgard {
 
                         var y;
 
-                        if(this._isDown(d)){
+                        if (this._isDown(d)) {
                             y = yScale(d.open);
-                        }else{
+                        } else {
                             y = yScale(d.close);
                         }
 
@@ -1141,27 +1316,27 @@ module Asgard {
                         return y;
                     })
                     .attr('width', RectWidth * 2)
-                    .attr('height', ((d:StockData.DataInterface):number =>{
+                    .attr('height', ((d:StockData.DataInterface):number => {
                         return RectWidth;
                     }))
-                    .classed(className,true)
-                    .classed(Util.generateClassName(this,'up'), this._isUp)
-                    .classed(Util.generateClassName(this,'down'),this._isDown)
-                    .classed(Util.generateClassName(this,'consolidation'),this._isConsolidation);
+                    .classed(className, true)
+                    .classed(Util.generateClassName(this, 'up'), this._isUp)
+                    .classed(Util.generateClassName(this, 'down'), this._isDown)
+                    .classed(Util.generateClassName(this, 'consolidation'), this._isConsolidation);
                 return this;
 
             }
 
-            _drawHighLowRect():ChartInterface{
-                var className = Util.generateClassName(this,'high-low-rect'),
+            _drawHighLowRect():ChartInterface {
+                var className = Util.generateClassName(this, 'high-low-rect'),
                     selection:any = this._stock.getContainer(this._name)
-                    .selectAll('rect.'+className)
-                    .data(
-                    this._stock.getDataContainer().getData(this._dataName),
-                    (d:StockData.DataInterface):number=> {
-                        return d.start;
-                    }
-                );
+                        .selectAll('rect.' + className)
+                        .data(
+                        this._stock.getDataContainer().getData(this._dataName),
+                        (d:StockData.DataInterface):number=> {
+                            return d.start;
+                        }
+                    );
 
                 if (selection.empty()) {
                     selection = selection.enter().append('rect');
@@ -1185,18 +1360,18 @@ module Asgard {
                         return yScale(d.high);
                     })
                     .attr('width', RectWidth)
-                    .attr('height', ((d:StockData.DataInterface):number =>{
+                    .attr('height', ((d:StockData.DataInterface):number => {
                         var height = yScale(d.low) - yScale(d.high);
                         return Math.max(height, 1);
                     }))
-                    .classed(className,true)
-                    .classed(Util.generateClassName(this,'up'), this._isUp)
-                    .classed(Util.generateClassName(this,'down'),this._isDown)
-                    .classed(Util.generateClassName(this,'consolidation'),this._isConsolidation);
+                    .classed(className, true)
+                    .classed(Util.generateClassName(this, 'up'), this._isUp)
+                    .classed(Util.generateClassName(this, 'down'), this._isDown)
+                    .classed(Util.generateClassName(this, 'consolidation'), this._isConsolidation);
                 return this;
             }
 
-            draw():ChartInterface{
+            draw():ChartInterface {
 
                 this._drawHighLowRect();
                 this._drawOpenRect();
@@ -1205,30 +1380,6 @@ module Asgard {
             }
         }
 
-    }
-
-    export interface StockMarginOptionsInterface {
-        left?:number;
-        top?:number;
-        bottom?:number;
-        right?:number
-    }
-
-    export interface StockChartOptionsInterface {
-        name:string;
-        type:string;
-        dataName:string;
-    }
-
-    export interface StockComponentOptionsInterface {
-        name:string;
-        type:string;
-    }
-
-    export interface StockDataOptionsInterface {
-        name:string;
-        data:any[];
-        isDefault?:boolean;
     }
 
     export class Stock {
@@ -1270,15 +1421,16 @@ module Asgard {
             this._zoom = d3.behavior.zoom();
 
             var scaleExtend;
-            switch (this._interval){
+            switch (this._interval) {
                 case '1':
-                    scaleExtend = [1,3];
+                    scaleExtend = [1, 3];
                     break;
             }
             this._zoom.scaleExtent(scaleExtend);
 
             this.getContainer('baseSvg').call(this._zoom);
-            this.zoom(():void=> {});
+            this.zoom(():void=> {
+            });
             return this;
         }
 
@@ -1335,9 +1487,7 @@ module Asgard {
                 this._zoom.on('zoom', ()=> {
 
                     // y 不缩放，所以计算当前范围内的最高和最低价格
-                    var xDomain = this._xScale.domain();
-                    var data = this._dataContainer.getDataByDateRange(xDomain[0], xDomain[1]);
-                    this._yScale.domain(this._dataContainer.getMinAndMaxPrice(data));
+                    this._yScale.domain(this._dataContainer.getYdomain());
 
                     // 对需要同步的Stock 进行xScale,yScale设置
                     this._sync.forEach((stock) => {
@@ -1513,7 +1663,7 @@ module Asgard {
             return this._dataContainer;
         }
 
-        getHiddenClass():string{
+        getHiddenClass():string {
             return this._hiddenClass;
         }
 

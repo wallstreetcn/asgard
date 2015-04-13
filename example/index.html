@@ -30,19 +30,19 @@
 
         $.get(api,function(data2){
             var p = new Asgard.Stock('#svg', {
-                width:600,
-                height:300,
+                width:1200,
+                height:400,
                 isZoom:true,
                 interval:'1',
                 data:[
-                    {
-                        name:'sh00001',
-                        data:data2.results
-                    },
 //                    {
-//                        name:'XAUUSD',
-//                        data:data.results
-//                    }
+//                        name:'sh00001',
+//                        data:data2.results
+//                    },
+                    {
+                        name:'XAUUSD',
+                        data:data.results
+                    }
                 ],
                 components: [
                     {
@@ -75,7 +75,7 @@
                     {
                         name:'sh00001-Candle',
                         type:'Candle',
-                        dataName:'sh00001'
+                        dataName:'XAUUSD'
                     }
                 ]
 
