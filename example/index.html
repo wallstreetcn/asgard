@@ -10,6 +10,8 @@
 </head>
 <body>
 
+<button>点击</button>
+
 <div id="svg">
 
 </div>
@@ -17,91 +19,96 @@
 
 <script>
 
-    var symbol = 'XAUUSD',
-            interval = '1',
-            rows = 3000;
-    var api = 'http://api.markets.wallstreetcn.com:80/v1/chart.json?symbol=' + symbol + '&interval=' + interval + '&rows=' + rows;
+    var stock;
+
+    function getApi(symbol) {
+        var interval = '1', rows = 3000;
+        return 'http://api.markets.wallstreetcn.com:80/v1/chart.json?symbol=' + symbol + '&interval=' + interval + '&rows=' + rows;
+    }
 
 
-    $.get(api, function (data) {
+    $.get(getApi('XAUUSD'), function (data) {
+        stock = new Asgard.Stock('#svg', {
+            width: 700,
+            height: 400,
+            isZoom: true,
+            interval: '1',
+            data: [
+                {
+                    name: 'sh000001',
+                    data: data.results
+                }
+            ],
+            components: [
+                {
+                    name: 'axis-bottom',
+                    type: 'axis',
+                    orient: 'bottom'
+                },
+                {
+                    name: 'axis-right',
+                    type: 'axis',
+                    orient: 'right'
+                },
+                {
+                    name: 'grid-x',
+                    type: 'grid',
+                    orient: 'x'
+                },
+                {
+                    name: 'grid-y',
+                    type: 'grid',
+                    orient: 'y'
+                },
+                {
+                    name: 'tips',
+                    type: 'tips'
+                },
+                {
+                    name: 'current-price-line',
+                    type: 'currentPriceLine',
+                }
+            ],
+            charts: [
 
-        symbol = 'sh000001';
-        api = 'http://api.markets.wallstreetcn.com:80/v1/chart.json?symbol=' + symbol + '&interval=' + interval + '&rows=' + rows;
+                {
+                    name: 'sh00001-Candle',
+                    type: 'hollowCandle',
+                    dataName: 'sh000001'
+                }
+            ]
 
-        $.get(api,function(data2){
-            var p = new Asgard.Stock('#svg', {
-                width:1200,
-                height:400,
-                isZoom:true,
-                interval:'1',
-                data:[
-//                    {
-//                        name:'sh00001',
-//                        data:data2.results
-//                    },
-                    {
-                        name:'XAUUSD',
-                        data:data.results
-                    }
-                ],
-                components: [
-                    {
-                        name:'axis-bottom',
-                        type: 'axis',
-                        orient: 'bottom'
-                    },
-                    {
-                        name:'axis-right',
-                        type: 'axis',
-                        orient: 'right'
-                    },
-                    {
-                        name:'grid-x',
-                        type:'grid',
-                        orient:'x'
-                    },
-                    {
-                        name:'grid-y',
-                        type:'grid',
-                        orient:'y'
-                    },
-                    {
-                        name:'tips',
-                        type:'tips'
-                    }
-                ],
-                charts:[
+        });
 
-                    {
-                        name:'sh00001-Candle',
-                        type:'Candle',
-                        dataName:'XAUUSD'
-                    }
-                ]
+        stock.draw();
 
-            });
-
-            p.draw();
-
-
-        },'jsonp');
-
-    },'jsonp');
-
-
+    }, 'jsonp');
 
 
 </script>
-
 
 <script>
-    //    var api = 'http://api.markets.wallstreetcn.com/v1/tradingView/history?symbol=XAUUSD&resolution=1d&from=1333443736&to=1428051736&callback=jQuery20307764852049294859_1428051733178&_=1428051733181';
-    //    $.get(api,function(data){
-    //        console.log(data);
-    //    },'jsonp')
+
+    $('button').on('click', function () {
+
+
+        $.get(getApi('XAUUSD'), function (data) {
+
+
+            stock.addData({
+                name:'sh000001',
+                data:data.results
+            });
+
+            stock.draw();
+
+        }, 'jsonp');
+
+
+    });
+
 
 </script>
-
 
 
 </body>

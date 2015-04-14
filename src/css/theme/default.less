@@ -1,136 +1,53 @@
+@import "../global";
 
-@name:asgard;
+// charts variable
 
+@line:#e62fff;
 
-.@{name}-hide{
-  display: none !important;
-}
+@area:#e820ff;
+@area-opacity:0.2;
 
-.@{name}-tips{
+@candle-high-low-line:#000;
+@candle-rect-border:#000;
+@candle-up:#028015;
+@candle-down:#ff0002;
+@candle-consolidation:#028015;
+@candle-consolidation-border:transparent;
 
-  .@{name}-tips-x,
-  .@{name}-tips-y{
-    stroke: #e62fff;
-    stroke-dasharray: 5,5;
-  }
-}
+@hollow-candle-high-line:#000;
+@hollow-candle-low-line:#000;
+@hollow-candle-rect-border:#000;
+@hollow-candle-rect-up-border:#028015;
+@hollow-candle-up:transparent;
+@hollow-candle-down:#ff0002;
+@hollow-candle-consolidation:#028015;
+@hollow-candle-consolidation-border:transparent;
 
+@bars-up:#028015;
+@bars-down:#ff0002;
+@bars-consolidation:#028015;
 
-.@{name}-axis {
+// components variable
 
-  &.axis {
-    &-right,
-    &-left,
-    &-top,
-    &-bottom {
+@current-price-line:#ff1449;
+@current-price-line-dasharray:5,5;
 
-      stroke: #00f5ff;
-
-      .tick text {
-        stroke: #333;
-      }
-
-    }
-  }
-
-}
-
-.@{name}-grid{
-  stroke: #ddd;
-  stroke-opacity: 0.5;
-}
-
-.@{name}-line {
-
-  path {
-    stroke: #e62fff;
-  }
-
-}
-
-.@{name}-area {
-
-  path {
-    fill: #e820ff;
-    fill-opacity: 0.2;
-  }
-
-}
+@tips:#e62fff;
+@tips-dasharray:5,5;
 
 
-.@{name}-highlowrect,
-.@{name}-ohlc{
+@axis-border:#00f5ff;
+@axis-text:#333;
 
-  .up-rect{
-    fill: #028015;
-    stroke: #028015;
-  }
-
-  .down-rect{
-    stroke: #ff0002;
-    fill:#ff0002;
-  }
-}
+@grid:#ddd;
+@grid-opacity:0.5;
 
 
-.@{name}-candle{
-
-  .@{name}-candle-line{
-    stroke: #000;
-  }
-  .@{name}-candle-rect{
-    stroke: #000;
-  }
-  .@{name}-candle-up{
-    fill: #028015;
-  }
-  .@{name}-candle-down{
-    fill: #ff0002;
-  }
-  .@{name}-candle-consolidation{
-    fill: #028015;
-    stroke: transparent;
-  }
-
-}
-
-.@{name}-hollowcandle{
-
-  .@{name}-hollowcandle-high-line,
-  .@{name}-hollowcandle-low-line{
-    stroke: #000;
-  }
-
-  .@{name}-hollowcandle-rect{
-    stroke: #000;
-  }
-
-  .@{name}-hollowcandle-rect.@{name}-hollowcandle-up{
-    stroke: #028015;
-  }
-  .@{name}-hollowcandle-up{
-    fill: transparent;
-  }
-  .@{name}-hollowcandle-down{
-    fill: #ff0002;
-  }
-  .@{name}-hollowcandle-consolidation{
-    fill: #028015;
-    stroke: transparent;
-  }
-
-}
 
 
-.@{name}-bars{
-  .@{name}-bars-up{
-    fill: #028015;
-  }
-  .@{name}-bars-down{
-    fill: #ff0002;
-  }
-  .@{name}-bars-consolidation{
-    fill: #028015;
-  }
 
-}
+
+
+
+
+

@@ -15,6 +15,28 @@ module Asgard {
      */
     export var version:string = '0.0.1';
 
+
+    /**
+     * 扩展d3事件
+     *
+     * d3.on(type,listener) 只支持绑定一个listener
+     *
+     * @param type
+     * @param listener
+     */
+    d3.selection.prototype.addEventListener = function (type,listener) {
+
+        this.node().addEventListener(type,function(e){
+
+            e = e || window.event;
+
+            d3.event = e;
+
+            listener.call(this);
+        });
+    }
+
+
     /**
      * Stock Margin Options 接口
      */
@@ -59,6 +81,16 @@ module Asgard {
         var toString = Object.prototype.toString;
 
         /**
+         * 判断是否是函数
+         *
+         * @param value
+         * @returns {boolean}
+         */
+        export function isFunction(value) {
+            return toString.call(value) === '[object Function]' || typeof value === 'function';
+        }
+
+        /**
          * 判断是否是数组
          * @param value
          * @returns {boolean}
@@ -67,6 +99,17 @@ module Asgard {
             return toString.call(value) === '[object Array]';
         }
 
+
+        /**
+         * hump to
+         * @param str
+         * @returns {string}
+         */
+        export function humpSplit(str){
+            return str.replace(/([A-Z])/g,"-$1").toLowerCase();
+        }
+
+
         /**
          * 生成className
          * @param object
@@ -74,7 +117,7 @@ module Asgard {
          * @returns {string}
          */
         export function generateClassName(object:Object, suffix?:string):string {
-            return name.toLowerCase() + '-' + getClassName(object).toLowerCase() + (suffix ? '-' + suffix : '');
+            return name.toLowerCase()  + humpSplit(getClassName(object)) + (suffix ? '-' + suffix : '');
         }
 
         /**
@@ -147,6 +190,7 @@ module Asgard {
              * @returns {{start: number, end: number, high: any, low: any, open: any, close: any, price: any, volume: any}[]}
              */
             format(data:Object[]):DataInterface[] {
+
                 return data.map((d) => {
                     return {
                         start: d['start'] * 1000,
@@ -195,6 +239,15 @@ module Asgard {
             }
 
             /**
+             * 获取默认数据
+             *
+             * @returns {DataInterface[]}
+             */
+            getDefaultData():DataInterface[]{
+                return this._data[this._defaultName];
+            }
+
+            /**
              * 获取原始数据
              *
              * @param name
@@ -225,7 +278,6 @@ module Asgard {
              *
              * x轴一般对应的是Date,Stock限制只能有相同的interval的数据，所以不需要考虑多个数据源的domain,
              * 使用默认的数据，如果可以缩放，截取下数据,因为不需要将数据全部展现出来
-             * 为了让数据显示不超出可视范围，数据计算出来的范围进行合适的修改
              *
              * @returns {Date[]}
              */
@@ -241,6 +293,20 @@ module Asgard {
                     return new Date(d.start);
                 }));
 
+                return this._disposeMinAndMaxDate(date);
+
+            }
+
+            /**
+             * 处理最小最大时间
+             *
+             * 为了让数据显示不超出x可视范围，对最小和最大时间进行合适的修改
+             * @param date
+             * @returns {Date[]}
+             * @private
+             */
+            _disposeMinAndMaxDate(date:Date[]):Date[]{
+
                 var minDate:Date = date[0],
                     maxDate:Date = date[1];
 
@@ -249,6 +315,28 @@ module Asgard {
 
                 return [minDate, maxDate];
             }
+
+            /**
+             * 处理最小和最大价格
+             *
+             * 为了让数据显示不超出y可视范围，对最小和最大价格进行合适的修改
+             *
+             * @param price
+             * @private
+             */
+            _disposeMinAndMaxPrice(price:number[]):number[]{
+
+                var min = price[0],
+                    max = price[1],
+                    diff = (max - min) * 0.1;
+
+                return [
+                    min - diff,
+                    max + diff
+                ];
+            }
+
+
 
             /**
              * 获取y的domain
@@ -274,6 +362,19 @@ module Asgard {
 
                 return this.getMinAndMaxPrice(data);
 
+            }
+
+            /**
+             * 获取数据最大和最小时间
+             *
+             * 使用默认的数据就可以
+             *
+             * @returns {Date[]}
+             */
+            getMinAndMaxDate():Date[]{
+                return this._disposeMinAndMaxDate(d3.extent(this.getDefaultData().map( (d:DataInterface) =>{
+                    return new Date(d.start);
+                })));
             }
 
 
@@ -325,6 +426,19 @@ module Asgard {
 
             }
 
+            /**
+             * 获取当前价格
+             *
+             * @returns {number}
+             */
+            getCurrentPrice():number{
+
+                var currentData = this.getDefaultData()[0];
+
+                return currentData.close > currentData.open ? currentData.close : currentData.open;
+
+            }
+
 
             /**
              * 获取一个时间范围内的所有数据
@@ -353,6 +467,7 @@ module Asgard {
                 return data;
             }
 
+
             /**
              * 获取数据内的最高和最低价格
              *
@@ -363,8 +478,9 @@ module Asgard {
              */
             getMinAndMaxPrice(data:Object):number[] {
 
-                var allData = [], min, max, diff;
+                var allData = [], min, max;
 
+                // @todo:这里不应该合并多个数据
                 for (var key in data) {
                     allData = allData.concat(data[key]);
                 }
@@ -377,12 +493,15 @@ module Asgard {
                     return d.high;
                 });
 
-                diff = (max - min) * 0.1;
+                // 去掉该功能，考虑到最高价和最低价可能差太多而显示不正常
+                // 为了组件currentPriceLine考虑，最低价不能高于当前价格，最高价也不能低于当前价格
+                // var currentPrice = this.getCurrentPrice();
+                // min = Math.min(min,currentPrice);
+                // max = Math.max(max,currentPrice);
 
-                return [
-                    min - diff,
-                    max + diff
-                ];
+                return this._disposeMinAndMaxPrice([min,max]);
+
+
             }
 
         }
@@ -670,6 +789,27 @@ module Asgard {
 
         export class Tips extends BaseComponent {
 
+            _show(tips:Tips,stock:Stock,data:StockData.DataInterface){
+
+                var showContainerName = tips.getName + '-show',
+                    showContainer = stock.getContainer(showContainerName);
+
+                if(!showContainer){
+                    showContainer = stock.getContainer('baseSvg').append('g');
+                    stock.addContainer(showContainerName,showContainer);
+                }
+
+                // @todo:......
+
+            }
+
+            _parseOptions(options:StockComponentOptionsInterface):ComponentInterface {
+
+                Util.isFunction(options['show']) && (this._show = options['show']);
+
+                return this;
+            }
+
             // tips 需要显示在最前面，所以重写_createContainer方法
             _createContainer():ComponentInterface {
 
@@ -691,6 +831,7 @@ module Asgard {
             draw():ComponentInterface {
 
                 var stock = this._stock,
+                    tips = this,
                     xLine = stock.getContainer(this._name + '-x'),
                     yLine = stock.getContainer(this._name + '-y'),
                     xClassName = Util.generateClassName(this, 'x'),
@@ -730,12 +871,53 @@ module Asgard {
                     xLine.attr('x1', 0).attr('y1', y).attr('x2', width).attr('y2', y).classed(stock.getHiddenClass(), false).attr('transform', 'translate(' + margin.left + ',0)');
                     yLine.attr('x1', nearDataX).attr('y1', 0).attr('x2', nearDataX).attr('y2', height).classed(stock.getHiddenClass(), false).attr('transform', 'translate(0,' + margin.top + ')');
 
+                    tips._show.call(this,tips,stock,nearData,d3.mouse(this),this);
+
                 });
 
                 return this;
 
             }
         }
+
+
+        export class CurrentPriceLine extends BaseComponent{
+
+            draw():ComponentInterface{
+
+                var selection:any = this._stock.getContainer(this._name).selectAll('line').data([this]),
+                    yScale = this._stock.getYScale();
+
+                if (selection.empty()) {
+                    selection = selection.enter().append('line');
+                } else {
+                    if (selection.enter().empty()) {
+                        selection.exit().remove();
+                    } else {
+                        selection.enter().append('line');
+                    }
+                }
+
+
+                var currentPrice = this._stock.getDataContainer().getCurrentPrice(),
+                    y = yScale(currentPrice) + this._stock.getMargin().top,
+                    left = this._stock.getMargin().left;
+
+                selection.attr("x1", left )
+                    .attr("y1", y)
+                    .attr("x2", this._stock.getWidth() + left)
+                    .attr("y2", y);
+
+                return this;
+            }
+
+
+        }
+
+
+
+
+
     }
 
     /**
@@ -933,6 +1115,18 @@ module Asgard {
                 return this;
             }
 
+            _isUp(d:StockData.DataInterface):boolean {
+                return d.close > d.open;
+            }
+
+            _isDown(d:StockData.DataInterface):boolean {
+                return d.close < d.open;
+            }
+
+            _isConsolidation(d:StockData.DataInterface):boolean {
+                return d.close === d.open;
+            }
+
             getZoomRectWidth():number {
 
                 var scale = 1;
@@ -942,7 +1136,7 @@ module Asgard {
                 }
 
                 scale = Math.max(1, scale);
-                scale = Math.min(4, scale);
+                //scale = Math.min(4, scale);
 
                 return scale * this._rectWidth;
             }
@@ -955,18 +1149,6 @@ module Asgard {
 
             getRectWidth():number {
                 return this._rectWidth;
-            }
-
-            _isUp(d:StockData.DataInterface):boolean {
-                return d.close > d.open;
-            }
-
-            _isDown(d:StockData.DataInterface):boolean {
-                return d.close < d.open;
-            }
-
-            _isConsolidation(d:StockData.DataInterface):boolean {
-                return d.close === d.open;
             }
         }
 
@@ -993,7 +1175,7 @@ module Asgard {
                     }
                 }
 
-                selection.attr('d', this._highLowline()).classed(Util.generateClassName(this, 'line'), true);
+                selection.attr('d', this._highLowline()).classed(Util.generateClassName(this, 'high-low-line'), true);
                 return this;
             }
 
@@ -1417,8 +1599,64 @@ module Asgard {
             Util.isArray(options.data) && options.data.forEach((data) => this.addData(data));
         }
 
+
+        /**
+         * 对zoom中的drag事件进行限制
+         *
+         * 当drag到最右或最左时，组织d3.zoom的mousemove，防止drag到无数据区域
+         *
+         * @returns {Asgard.Stock}
+         * @private
+         */
+        _zoomDragLimit():Stock{
+
+            var baseSvg = this.getContainer('baseSvg'),
+                stock = this,
+                dragged = false,
+                startX;
+
+            baseSvg.addEventListener('mousedown',function(){
+                dragged = !dragged;
+                startX = d3.mouse(this)[0];
+            });
+
+            baseSvg.addEventListener('mouseup',function(){
+                dragged = !dragged;
+            });
+
+            baseSvg.addEventListener('mousemove',function(){
+
+                if(!dragged){
+                    return ;
+                }
+
+                var moveX  = d3.mouse(this)[0],
+                    domain = stock.getXScale().domain(),
+                    minAndMaxDate = stock.getDataContainer().getMinAndMaxDate(),
+                    minDate = minAndMaxDate[0],
+                    maxDate = minAndMaxDate[1];
+
+                // 当前的时间小于数据的最小时间，并且drag方向是往左
+                if(domain[0] < minDate && startX < moveX){
+                    d3.event.stopPropagation();
+                }
+
+                // 当前的时间大于数据的最大时间，并且drag方向是往右
+                if(domain[1] > maxDate && startX > moveX){
+                    d3.event.stopPropagation()
+                }
+
+            });
+
+            return this;
+        }
+
         _initZoom():Stock {
+
             this._zoom = d3.behavior.zoom();
+
+            var stock = this,
+                baseSvg = this.getContainer('baseSvg');
 
             var scaleExtend;
             switch (this._interval) {
@@ -1428,9 +1666,10 @@ module Asgard {
             }
             this._zoom.scaleExtent(scaleExtend);
 
-            this.getContainer('baseSvg').call(this._zoom);
-            this.zoom(():void=> {
-            });
+            baseSvg.call(this._zoom);
+
+            this._zoomDragLimit();
+            this.zoom(():void=> {});
             return this;
         }
 

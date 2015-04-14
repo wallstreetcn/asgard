@@ -1,0 +1,68 @@
+.@{name}-line {
+  path {
+    stroke: @line;
+  }
+}
+.@{name}-area {
+
+  path {
+    fill: @area;
+    fill-opacity: @area-opacity;
+  }
+}
+
+.@{name}-candle{
+  &-high-low-line{
+    stroke: @candle-high-low-line;
+  }
+  &-rect{
+    stroke: @candle-rect-border;
+  }
+  &-up{
+    fill: @candle-up;
+  }
+  &-down{
+    fill: @candle-down;
+  }
+  &-consolidation{
+    fill: @candle-consolidation;
+    stroke: @candle-consolidation-border;
+  }
+}
+
+.@{name}-hollow-candle{
+  &-high-line{
+    stroke: @hollow-candle-high-line;
+  }
+  &-low-line{
+    stroke: @hollow-candle-low-line;
+  }
+  &-rect{
+    stroke: @hollow-candle-rect-border;
+  }
+  &-rect&-up{
+    stroke: @hollow-candle-rect-up-border;
+  }
+  &-up{
+    fill: @hollow-candle-up;
+  }
+  &-down{
+    fill: @hollow-candle-down;
+  }
+  &-consolidation{
+    fill: @hollow-candle-consolidation;
+    stroke: @hollow-candle-consolidation-border;
+  }
+}
+
+.@{name}-bars{
+  &-up{
+    fill: @bars-up;
+  }
+  &-down{
+    fill: @bars-down;
+  }
+  &-consolidation{
+    fill: @bars-consolidation;
+  }
+}

@@ -8,8 +8,8 @@ gulp.task('build', function () {
 
     // less
     gulp.src('./src/css/theme/**/*.less')
-        .pipe(less({}))
         .pipe(plumber())
+        .pipe(less({}))
         .pipe(gulp.dest('./dist/css/theme/'))
         .pipe(livereload());
 
@@ -27,5 +27,5 @@ gulp.task('build', function () {
 
 gulp.task('serve',function(){
     livereload.listen();
-    return gulp.watch(['./src/asgard.ts','./src/css/theme/**/*.less'],['build'])
+    return gulp.watch(['./src/asgard.ts','./src/css/**/*.less'],['build'])
 })
