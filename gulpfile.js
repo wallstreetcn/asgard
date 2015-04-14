@@ -27,5 +27,5 @@ gulp.task('build', function () {
 
 gulp.task('serve',function(){
     livereload.listen();
-    return gulp.watch(['./src/asgard.ts','./src/css/**/*.less'],['build'])
+    return gulp.watch(['./src/asgard.ts','./src/css/**/*.less','./example/**/*'],['build'])
 })

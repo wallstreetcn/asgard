@@ -17,25 +17,55 @@ module Asgard {
 
 
     /**
+     * 事件容器，删除时候需要用到
+     * @type {{}}
+     */
+    var listenerContainer = {};
+
+    /**
      * 扩展d3事件
      *
      * d3.on(type,listener) 只支持绑定一个listener
-     *
      * @param type
      * @param listener
      */
     d3.selection.prototype.addEventListener = function (type,listener) {
 
-        this.node().addEventListener(type,function(e){
+        var listenerFunction = function(e){
 
             e = e || window.event;
 
             d3.event = e;
 
             listener.call(this);
+        }
+
+        if(!listenerContainer[type]){
+            listenerContainer[type] = [];
+        }
+
+        listenerContainer[type].push({
+            listenerFunction:listenerFunction,
+            listener:listener
         });
+
+        this.node().addEventListener(type,listenerFunction);
     }
 
+    d3.selection.prototype.removeEventListener = function (type,listener) {
+
+        var typeListeners = listenerContainer[type];
+
+        if(typeListeners){
+            for(var i = 0 , l = typeListeners.length ; i < l ; i++){
+                var typeListener = typeListeners[i];
+                if(typeListener.listener === listener){
+                    this.node().removeEventListener(type,typeListener.listenerFunction);
+                }
+            }
+        }
+
+    }
 
     /**
      * Stock Margin Options 接口
@@ -301,6 +331,9 @@ module Asgard {
              * 处理最小最大时间
              *
              * 为了让数据显示不超出x可视范围，对最小和最大时间进行合适的修改
+             *
+             * @todo : 针对不同的interval,需要进行不同的修改
+             *
              * @param date
              * @returns {Date[]}
              * @private
@@ -359,6 +392,7 @@ module Asgard {
                     }
 
                 }
+
 
                 return this.getMinAndMaxPrice(data);
 
@@ -451,7 +485,7 @@ module Asgard {
              */
             getDataByDateRange(gtValue:any, ltValue:any):Object {
 
-                var data = {};
+                var data = {},emptyCount = 0,dataCount = 0;
 
                 for (var name in this._data) {
 
@@ -462,7 +496,20 @@ module Asgard {
                             data[name].push(d);
                         }
                     });
+
+                    if(data[name].length === 0){
+                        emptyCount++;
+                    }
+
+                    dataCount++;
                 }
+
+
+                // 所有数据都为空,则不判断范围返回所有数据
+                if(emptyCount === dataCount){
+                    return this._data;
+                }
+
 
                 return data;
             }
@@ -900,23 +947,19 @@ module Asgard {
 
 
                 var currentPrice = this._stock.getDataContainer().getCurrentPrice(),
-                    y = yScale(currentPrice) + this._stock.getMargin().top,
-                    left = this._stock.getMargin().left;
+                    margin = this._stock.getMargin(),
+                    y = yScale(currentPrice) + margin.top;
 
-                selection.attr("x1", left )
+
+                selection.attr("x1", margin.left )
                     .attr("y1", y)
-                    .attr("x2", this._stock.getWidth() + left)
-                    .attr("y2", y);
+                    .attr("x2", this._stock.getWidth() + margin.left)
+                    .attr("y2", y).classed(this._stock.getHiddenClass(),y < margin.top || y > (margin.top + this._stock.getHeight()));
 
                 return this;
             }
 
-
         }
-
-
-
-
 
     }
 
@@ -1131,7 +1174,7 @@ module Asgard {
 
                 var scale = 1;
 
-                if (d3.event) {
+                if (d3.event && d3.event.type === 'zoom') {
                     scale = d3.event.scale;
                 }
 
@@ -1188,6 +1231,8 @@ module Asgard {
                         return d.start;
                     }
                 );
+
+
 
                 if (selection.empty()) {
                     selection = selection.enter().append('rect');
@@ -1566,8 +1611,8 @@ module Asgard {
 
     export class Stock {
 
-        _width:number = 900;
-        _height:number = 300;
+        _width:number;
+        _height:number;
         _margin:StockMarginOptionsInterface = {left: 50, top: 50, bottom: 50, right: 75};
         _interval:string = '1D';
         _xScale:any;
@@ -1583,11 +1628,15 @@ module Asgard {
 
         constructor(selection:any, options:any) {
 
+            selection = this._convertSelection(selection);
+
             // 重要的options
-            options.width && (this._width = options.width);
-            options.height && (this._height = options.height);
-            options.interval && (this._interval = options.interval);
             options.margin && (this._margin = options.margin);
+
+            this._width = (options.width || (selection.node().clientWidth || document.documentElement.clientWidth)) - this._margin.left - this._margin.right;
+            this._height = (options.height || (selection.node().clientHeight || document.documentElement.clientHeight)) - this._margin.top - this._margin.bottom;
+
+            options.interval && (this._interval = options.interval);
             options.isZoom && (this._isZoom = options.isZoom);
 
             this._initContainer(selection);
@@ -1601,9 +1650,22 @@ module Asgard {
 
 
         /**
+         * 将选择器转换成d3.selection
+         *
+         * @param selection
+         * @returns {any}
+         * @private
+         */
+        _convertSelection(selection:any):D3.Selection{
+            return selection instanceof d3.selection ? selection : d3.select(selection);
+        }
+
+        /**
          * 对zoom中的drag事件进行限制
          *
-         * 当drag到最右或最左时，组织d3.zoom的mousemove，防止drag到无数据区域
+         * 当drag到最右或最左时，阻止d3.zoom的mousemove，防止drag到无数据区域
+         *
+         * @todo : 有个bug,如果大幅度drag到svg外部，zoom事件就无法阻止，应该是d3的问题
          *
          * @returns {Asgard.Stock}
          * @private
@@ -1616,19 +1678,22 @@ module Asgard {
                 startX;
 
             baseSvg.addEventListener('mousedown',function(){
-                dragged = !dragged;
+                dragged = true;
                 startX = d3.mouse(this)[0];
+
+                var windowSelection = d3.select(window);
+
+                var mouseupListener = function(){
+                    dragged = false;
+                    windowSelection['removeEventListener']('mouseup',mouseupListener);
+                }
+
+                windowSelection['addEventListener']('mouseup',mouseupListener);
+
             });
 
-            baseSvg.addEventListener('mouseup',function(){
-                dragged = !dragged;
-            });
 
             baseSvg.addEventListener('mousemove',function(){
-
-                if(!dragged){
-                    return ;
-                }
 
                 var moveX  = d3.mouse(this)[0],
                     domain = stock.getXScale().domain(),
@@ -1643,6 +1708,7 @@ module Asgard {
 
                 // 当前的时间大于数据的最大时间，并且drag方向是往右
                 if(domain[1] > maxDate && startX > moveX){
+                    console.log(1);
                     d3.event.stopPropagation()
                 }
 
@@ -1673,17 +1739,14 @@ module Asgard {
             return this;
         }
 
-        _initContainer(selection:any):Stock {
+        _initContainer(selection:D3.Selection):Stock {
 
-            var baseContainer,
-                baseSvgContainer,
+            var baseSvgContainer,
                 dataContainer,
                 dataClipContainer,
                 margin = this.getMargin();
 
-            baseContainer = selection instanceof d3.selection ? selection : d3.select(selection);
-
-            baseSvgContainer = baseContainer.append('svg').attr({
+            baseSvgContainer = selection.append('svg').attr({
                 width: this.getWidth() + margin.left + margin.right,
                 height: this.getHeight() + margin.top + margin.bottom
             });
@@ -1705,7 +1768,7 @@ module Asgard {
                     height: this.getHeight()
                 });
 
-            this.addContainer('base', baseContainer)
+            this.addContainer('base', selection)
                 .addContainer('baseSvg', baseSvgContainer)
                 .addContainer('data', dataContainer)
                 .addContainer('dataClip', dataClipContainer);

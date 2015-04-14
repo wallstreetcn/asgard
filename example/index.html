@@ -5,37 +5,58 @@
 
     <script src="../bower_components/d3/d3.js"></script>
     <script src="../bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="../bower_components/angularjs/angular.min.js"></script>
+    <script src="../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="../dist/asgard.js"></script>
+    <script src="index.js"></script>
+    <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="../dist/css/theme/default.css"/>
 </head>
-<body>
+<body ng-app="asgard">
 
-<button>点击</button>
+<div class="container" ng-controller="exampleController">
 
-<div id="svg">
+    {{a}}
 
+    <div class="row">
+        <div class="col-sm-3">
+        <select class="form-control" ng-model="currentChannel">
+            <option value="-1">选择一个频道</option>
+            <option value="{{channel}}" ng-repeat="channel in channels">{{channel}}</option>
+        </select>
+    </div>
+
+    </div>
+
+
+    <div id="svg" style="overflow:hidden;">
+
+    </div>
 </div>
-
 
 <script>
 
-    var stock;
-
-    function getApi(symbol) {
-        var interval = '1', rows = 3000;
+    function getApi(symbol,interval,rows){
+        var interval = '1', rows = 1000;
         return 'http://api.markets.wallstreetcn.com:80/v1/chart.json?symbol=' + symbol + '&interval=' + interval + '&rows=' + rows;
     }
 
 
+    var stock;
+
     $.get(getApi('XAUUSD'), function (data) {
         stock = new Asgard.Stock('#svg', {
-            width: 700,
-            height: 400,
+            margin:{
+                left:0,
+                top:50,
+                bottom:65,
+                right:70
+            },
             isZoom: true,
             interval: '1',
             data: [
                 {
-                    name: 'sh000001',
+                    name: 'XAUUSD',
                     data: data.results
                 }
             ],
@@ -72,9 +93,9 @@
             charts: [
 
                 {
-                    name: 'sh00001-Candle',
-                    type: 'hollowCandle',
-                    dataName: 'sh000001'
+                    name: 'XAUUSD-Candle',
+                    type: 'Candle',
+                    dataName: 'XAUUSD'
                 }
             ]
 
@@ -87,28 +108,6 @@
 
 </script>
 
-<script>
-
-    $('button').on('click', function () {
-
-
-        $.get(getApi('XAUUSD'), function (data) {
-
-
-            stock.addData({
-                name:'sh000001',
-                data:data.results
-            });
-
-            stock.draw();
-
-        }, 'jsonp');
-
-
-    });
-
-
-</script>
 
 
 </body>
