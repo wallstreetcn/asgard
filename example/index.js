@@ -14,9 +14,13 @@ angular.module('asgard', [])
             USE_CHART: '已使用',
             USE_DATA: '已使用',
             USE_UNUSED_COMPONENT: '未使用',
+            NONE_SELECTED_SHOW_CONTAINER: '请选择需要显示的Container',
+            NONE_SELECTED_HIDE_CONTAINER: '请选择需要隐藏的Container',
             NONE_SELECTED_REMOVE_CHART: '请选择需要删除的Chart',
             NONE_SELECTED_REMOVE_COMPONENT: '请选择需要删除的Component',
-            NONE_SELECTED_REMOVE_DATA: '请选择需要删除的Data'
+            NONE_SELECTED_UNUSED_COMPONENT: '请选择需要使用的Component',
+            NONE_SELECTED_REMOVE_DATA: '请选择需要删除的Data',
+            INTERVAL_DIFFERENT_COMPARE: '不相同的interval不能进行比较'
         }
 
         $scope.charts = [
@@ -245,6 +249,7 @@ angular.module('asgard', [])
         $scope.addComponent = function () {
 
             if ($scope.currentUnusedComponent === $scope.messages.USE_UNUSED_COMPONENT) {
+                $scope.errorMessage = $scope.messages.NONE_SELECTED_UNUSED_COMPONENT;
                 return;
             }
 
@@ -319,6 +324,7 @@ angular.module('asgard', [])
         $scope.show = function () {
 
             if ($scope.currentHideContainer === $scope.messages.HIDE_CONTAINER) {
+                $scope.errorMessage = $scope.messages.NONE_SELECTED_SHOW_CONTAINER;
                 return;
             }
 
@@ -330,6 +336,7 @@ angular.module('asgard', [])
         $scope.hide = function () {
 
             if ($scope.currentShowContainer === $scope.messages.SHOW_CONTAINER) {
+                $scope.errorMessage = $scope.messages.NONE_SELECTED_HIDE_CONTAINER;
                 return;
             }
 
@@ -379,6 +386,7 @@ angular.module('asgard', [])
 
                 // interval 不相同不能比较
                 if ($scope.currentInterval !== $scope.asgard.getInterval()) {
+                    $scope.errorMessage = $scope.messages.INTERVAL_DIFFERENT_COMPARE
                     return;
                 }
 
