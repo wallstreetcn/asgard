@@ -30,7 +30,39 @@
                     <label>Chart</label>
                     <select class="form-control" ng-model="currentChart" ng-options="chart for chart in charts"></select>
                 </div>
-                <button type="button" class="btn btn-primary" ng-click="add()">添加</button>
+                <div class="form-group" ng-show="!asgard">
+                    <label>Width</label>
+                    <input type="number" class="form-control" ng-model="currentWidth">
+                </div>
+                <div class="form-group" ng-show="!asgard">
+                    <label>Height</label>
+                    <input type="number" class="form-control" ng-model="currentHeight">
+                </div>
+                <div class="form-group" ng-show="!asgard">
+                    <label>Margin</label>
+                    <div class="input-group mtb5">
+                        <div class="input-group-addon">Left</div>
+                        <input type="number" class="form-control" ng-model="currentMarginLeft">
+                    </div>
+                    <div class="input-group mtb5">
+                        <div class="input-group-addon">Right</div>
+                        <input type="number" class="form-control" ng-model="currentMarginRight">
+                    </div>
+                    <div class="input-group mtb5">
+                        <div class="input-group-addon">Top</div>
+                        <input type="number" class="form-control" ng-model="currentMarginTop">
+                    </div>
+                    <div class="input-group mtb5">
+                        <div class="input-group-addon">Bottom</div>
+                        <input type="number" class="form-control" ng-model="currentMarginBottom">
+                    </div>
+                </div>
+                <div class="form-group" ng-show="!asgard">
+                    <label>Component</label>
+                    <select multiple size="9" class="form-control" ng-model="currentComponents" ng-options="component.name for component in components">
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary" ng-click="add()">{{asgard?'更新':'添加'}}</button>
                 <button type="button" class="btn btn-success" ng-click="compare()">比较</button>
             </form>
         </div>
@@ -61,6 +93,16 @@
                 <div class="form-group">
                     <select ng-show="useComponents.length > 1" class="form-control" ng-model="currentUseComponent" ng-options="name as name for name in useComponents"></select>
                     <button ng-show="useComponents.length > 1 && currentUseComponent !== message.USE_COMPONENT" type="button" class="btn btn-danger" ng-click="removeComponent()">移除</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-group" ng-show="asgard && unusedComponents.length > 1">
+            <h5 ng-show="asgard && useComponents.length <= 1">Components</h5>
+            <form class="form-inline">
+                <div class="form-group">
+                    <select ng-show="unusedComponents.length > 1" class="form-control" ng-model="currentUnusedComponent" ng-options="name as name for name in unusedComponents"></select>
+                    <button ng-show="unusedComponents.length > 1 && currentUnusedComponent !== message.USE_UNUSED_COMPONENT" type="button" class="btn btn-danger" ng-click="addComponent()">添加</button>
                 </div>
             </form>
         </div>

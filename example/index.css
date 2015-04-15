@@ -1,3 +1,11 @@
+body{
+    overflow: hidden;
+}
+
+.mtb5{
+    margin:5px 0;
+}
+
 .left-options{
     width: 300px;
     margin:10px 10px;
@@ -6,4 +14,8 @@
 
 .right-stock{
     margin-left: 330px;
+}
+
+.left-options .input-group-addon{
+    width: 72px;
 }
