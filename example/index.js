@@ -59,6 +59,8 @@ angular.module('asgard', [])
 
         var updateNames = function(){
 
+            console.log($scope.asgard);
+
             $scope.currentShowContainer = $scope.messages.SHOW_CONTAINER;
             $scope.currentHideContainer = $scope.messages.HIDE_CONTAINER;
             $scope.currentUseComponent = $scope.messages.USE_COMPONENT;

@@ -1671,8 +1671,10 @@ module Asgard {
             this._width = (options.width || (selection.node().clientWidth || document.documentElement.clientWidth)) - this._margin.left - this._margin.right;
             this._height = (options.height || (selection.node().clientHeight || document.documentElement.clientHeight)) - this._margin.top - this._margin.bottom;
 
-            options.interval && (this._interval = options.interval);
             options.isZoom && (this._isZoom = options.isZoom);
+            // 使用setInterval,可以对zoom进行一些设置
+            options.interval && (this.setInterval(options.interval));
+
 
             this._initContainer(selection);
             this._initScale();
@@ -1757,16 +1759,7 @@ module Asgard {
 
             this._zoom = d3.behavior.zoom();
 
-            var stock = this,
-                baseSvg = this.getContainer('baseSvg');
-
-            var scaleExtend;
-            switch (this._interval) {
-                case '1':
-                    scaleExtend = [1, 3];
-                    break;
-            }
-            this._zoom.scaleExtent(scaleExtend);
+            var baseSvg = this.getContainer('baseSvg');
 
             baseSvg.call(this._zoom);
 
@@ -1964,7 +1957,19 @@ module Asgard {
         }
 
         setInterval(interval:string):Stock {
+
             this._interval = interval;
+
+            var scaleExtend;
+
+            switch (this._interval) {
+                case '1':
+                    scaleExtend = [1, 3];
+                    break;
+            }
+
+            this._zoom.scaleExtent(scaleExtend);
+
             return this;
         }
 
@@ -2078,19 +2083,12 @@ module Asgard {
             return this;
         }
 
-        removeData(name:string):Stock {
-
-            this._dataContainer.removeData(name);
-
-            return this;
-        }
-
 
         removeData(name:string):Stock{
 
             // 默认数据肯定不能删除
             if(this._dataContainer.getDefaultDataName() === name){
-                return ;
+                return this;
             }
 
             // 删除数据对应的chart
@@ -2107,15 +2105,44 @@ module Asgard {
 
 
         /**
-         * 移除chart就ok
+         * 移除chart,并且移除非默认的未使用到的数据
          *
          * @param name
          * @returns {Asgard.Stock}
          */
         removeChart(name:string):Stock {
 
+            var dataName = this._charts[name].getDataName(),
+                defaultName = this._dataContainer.getDefaultDataName(),
+                hasOtherUse = false;
+
+            // 检查除了自己需要以为的chart是否还有用该data
+            for (var chartName in this._charts) {
+                if (chartName !== name && this._charts[chartName].getDataName() === defaultName) {
+                    hasOtherUse = true;
+                }
+            }
+
+
+            // 如果是defaultName，并且不存在其他chart,该chart不能删除
+            if(dataName === defaultName){
+
+                // 不存在其他chart,该chart不能删除
+                if(!hasOtherUse){
+                    return this;
+                }
+
+            }
+
+            // 先删除当前chart,为后续删除数据removeData做准备
             delete this._charts[name];
             this.removeContainer(name);
+
+            // 如果数据不是defaultName,并且不存在其他chart,可以删除数据
+            if(hasOtherUse){
+                // removeData中也有调用removeChart,不过已经没有其他chart引用该dataName,所以不会有死循环调用
+                this.removeData(dataName);
+            }
 
             return this;
         }
