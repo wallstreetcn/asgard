@@ -1,49 +1,265 @@
 angular.module('asgard', [])
 
     .value('urls', {
-        finances: 'http://api.markets.wallstreetcn.com:80/v1/finances?callback=JSON_CALLBACK'
+        chart: 'http://api.markets.wallstreetcn.com:80/v1/chart.json'
     })
 
 
     .controller('exampleController', ['$scope', '$http', 'urls', function ($scope, $http, urls) {
 
-        $scope.currentChannel = -1;
+        $scope.messages = {
+            SHOW_CONTAINER:'已显示的',
+            HIDE_CONTAINER:'已隐藏的',
+            USE_COMPONENT:'已使用',
+            USE_CHART:'已使用'
+        }
 
-        $scope.finances = {};
-
-        $scope.channels = [
-            'forex',
-            'commodity',
-            'indice',
-            'bond',
-            'cfdindice',
-            'stock'
+        $scope.finances = [
+            {
+                name: '上证股票',
+                symbol: 'sh000001'
+            },
+            {
+                name: '黄金',
+                symbol: 'XAUUSD'
+            }
         ];
 
+        $scope.intervals = [
+            '1','5','15','30','1D','1h','4h','1W','1M'
+        ];
 
-        $scope.$watch('currentChannel',function(newValue,oldValue){
+        $scope.currentInterval = '1D';
+        $scope.currentSymbol = 'sh000001';
+        $scope.asgard = false;
 
-            if(newValue === -1){
-                return;
+        $scope.chartsType = [
+            'line','area'
+        ]
+
+
+        $scope.currentShowContainer = $scope.messages.SHOW_CONTAINER;
+        $scope.currentHideContainer = $scope.messages.HIDE_CONTAINER;
+        $scope.currentUseComponent = $scope.messages.USE_COMPONENT;
+        $scope.currentUseChart = $scope.messages.USE_CHART;
+
+        $scope.showContainers = [];
+        $scope.hideContainers = [];
+        $scope.useComponents = [];
+        $scope.useCharts = [];
+
+        var updateNames = function(){
+
+            $scope.currentShowContainer = $scope.messages.SHOW_CONTAINER;
+            $scope.currentHideContainer = $scope.messages.HIDE_CONTAINER;
+            $scope.currentUseComponent = $scope.messages.USE_COMPONENT;
+            $scope.currentUseChart = $scope.messages.USE_CHART;
+
+            $scope.showContainers = [$scope.messages.SHOW_CONTAINER];
+            $scope.hideContainers = [$scope.messages.HIDE_CONTAINER];
+            $scope.useComponents = [$scope.messages.USE_COMPONENT];
+            $scope.useCharts = [$scope.messages.USE_CHART];
+
+            var charts = $scope.asgard.getCharts(),
+                components = $scope.asgard.getComponents(),
+                containers = $scope.asgard.getContainers(),
+                name;
+
+            for(name in charts){
+                $scope.useCharts.push(name);
             }
 
+            for(name in components){
+                $scope.useComponents.push(name);
+            }
+
+            for(name in containers){
+
+                switch (name){
+                    case 'base':
+                    case 'baseSvg':
+                    case 'data':
+                    case 'dataClip':
+                        continue;
+                    break;
+                }
+
+                if($scope.asgard.containerIsHide(name)){
+                    $scope.hideContainers.push(name);
+                }else{
+                    $scope.showContainers.push(name);
+                }
+            }
+
+        }
+
+
+        var initAsgard = function(){
+            if (!$scope.asgard) {
+                $scope.asgard = new Asgard.Stock('#svg', {
+                    height:500,
+                    margin: {
+                        left: 0,
+                        top: 50,
+                        bottom: 65,
+                        right: 70
+                    },
+                    isZoom: true,
+                    components: [
+                        {
+                            name: 'axis-bottom',
+                            type: 'axis',
+                            orient: 'bottom'
+                        },
+                        {
+                            name: 'axis-right',
+                            type: 'axis',
+                            orient: 'right'
+                        },
+                        {
+                            name: 'grid-x',
+                            type: 'grid',
+                            orient: 'x'
+                        },
+                        {
+                            name: 'grid-y',
+                            type: 'grid',
+                            orient: 'y'
+                        },
+                        {
+                            name: 'tips',
+                            type: 'tips'
+                        },
+                        {
+                            name: 'current-price-line',
+                            type: 'currentPriceLine'
+                        }
+                    ]
+                });
+            }
+        };
+
+        var getPromise = function(){
             var config = {
                 params: {
-                    type: newValue
+                    callback: 'JSON_CALLBACK',
+                    symbol: $scope.currentSymbol,
+                    interval:$scope.currentInterval,
+                    rows : 1000
                 }
             };
 
-            $http.jsonp(urls.finances, config).success(function (data) {
+            return $http.jsonp(urls.chart, config);
+        }
+
+
+        $scope.removeChart = function(){
+
+            if($scope.currentUseChart === $scope.messages.USE_CHART){
+                return;
+            }
+
+            $scope.asgard.removeChart($scope.currentUseChart);
+
+            updateNames();
+
+        }
+
+        $scope.removeComponent = function(){
+
+            if($scope.currentUseComponent === $scope.messages.USE_COMPONENT){
+                return;
+            }
+
+
+            $scope.asgard.removeComponent($scope.currentUseComponent);
+
+            updateNames();
+
+        }
+
+        $scope.show = function(){
+
+            if($scope.currentHideContainer === $scope.messages.HIDE_CONTAINER){
+                return;
+            }
+
+            $scope.asgard.showContainer($scope.currentHideContainer);
+
+            updateNames();
+        }
+
+        $scope.hide = function(){
+
+            if($scope.currentShowContainer === $scope.messages.SHOW_CONTAINER){
+                return;
+            }
+
+            $scope.asgard.hideContainer($scope.currentShowContainer);
+            updateNames();
+        }
+
+        $scope.add = function () {
+
+            getPromise().success(function (data) {
 
                 data = data.results;
 
-                console.log(data);
+                initAsgard();
+
+                $scope.asgard.clearData();
+
+                $scope.asgard.setInterval($scope.currentInterval);
+
+                $scope.asgard.addData({
+                    name:$scope.currentSymbol,
+                    data:data
+                });
+
+                $scope.asgard.addChart({
+                    name:$scope.currentSymbol + '-candle',
+                    type:'candle',
+                    dataName:$scope.currentSymbol
+                });
+
+                $scope.asgard.draw();
+
+                updateNames();
 
             });
 
-        });
+        };
 
+        $scope.compare = function () {
 
+            getPromise().success(function (data) {
 
+                data = data.results;
+
+                initAsgard();
+
+                // interval 不相同不能比较
+                if($scope.currentInterval !== $scope.asgard.getInterval()){
+                    return ;
+                }
+
+                $scope.asgard.addData({
+                    name:$scope.currentSymbol,
+                    data:data
+                });
+
+                $scope.asgard.addChart({
+                    name:$scope.currentSymbol + '-line',
+                    type:'line',
+                    dataName:$scope.currentSymbol
+                });
+
+                $scope.asgard.draw();
+
+                updateNames();
+
+            });
+
+        };
 
     }]);

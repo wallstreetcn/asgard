@@ -25,13 +25,15 @@ module Asgard {
     /**
      * 扩展d3事件
      *
+     * @todo: IE....
+     *
      * d3.on(type,listener) 只支持绑定一个listener
      * @param type
      * @param listener
      */
-    d3.selection.prototype.addEventListener = function (type,listener) {
+    d3.selection.prototype.addEventListener = function (type, listener) {
 
-        var listenerFunction = function(e){
+        var listenerFunction = function (e) {
 
             e = e || window.event;
 
@@ -40,27 +42,27 @@ module Asgard {
             listener.call(this);
         }
 
-        if(!listenerContainer[type]){
+        if (!listenerContainer[type]) {
             listenerContainer[type] = [];
         }
 
         listenerContainer[type].push({
-            listenerFunction:listenerFunction,
-            listener:listener
+            listenerFunction: listenerFunction,
+            listener: listener
         });
 
-        this.node().addEventListener(type,listenerFunction);
+        this.node().addEventListener(type, listenerFunction);
     }
 
-    d3.selection.prototype.removeEventListener = function (type,listener) {
+    d3.selection.prototype.removeEventListener = function (type, listener) {
 
         var typeListeners = listenerContainer[type];
 
-        if(typeListeners){
-            for(var i = 0 , l = typeListeners.length ; i < l ; i++){
+        if (typeListeners) {
+            for (var i = 0, l = typeListeners.length; i < l; i++) {
                 var typeListener = typeListeners[i];
-                if(typeListener.listener === listener){
-                    this.node().removeEventListener(type,typeListener.listenerFunction);
+                if (typeListener.listener === listener) {
+                    this.node().removeEventListener(type, typeListener.listenerFunction);
                 }
             }
         }
@@ -135,8 +137,8 @@ module Asgard {
          * @param str
          * @returns {string}
          */
-        export function humpSplit(str){
-            return str.replace(/([A-Z])/g,"-$1").toLowerCase();
+        export function humpSplit(str) {
+            return str.replace(/([A-Z])/g, "-$1").toLowerCase();
         }
 
 
@@ -147,7 +149,7 @@ module Asgard {
          * @returns {string}
          */
         export function generateClassName(object:Object, suffix?:string):string {
-            return name.toLowerCase()  + humpSplit(getClassName(object)) + (suffix ? '-' + suffix : '');
+            return name.toLowerCase() + humpSplit(getClassName(object)) + (suffix ? '-' + suffix : '');
         }
 
         /**
@@ -259,6 +261,29 @@ module Asgard {
             }
 
             /**
+             * 移除数据
+             *
+             * 如果数据是defaultName 则删除defaultName
+             * @param name
+             * @returns {Asgard.StockData.DataContainer}
+             */
+            removeData(name:string):DataContainer {
+
+                console.log(this);
+
+                if (name === this._defaultName) {
+                    this._defaultName = null;
+                }
+
+                delete this._data[name];
+                delete this._originData[name];
+
+
+
+                return this;
+            }
+
+            /**
              * 获取数据
              *
              * @param name
@@ -273,7 +298,7 @@ module Asgard {
              *
              * @returns {DataInterface[]}
              */
-            getDefaultData():DataInterface[]{
+            getDefaultData():DataInterface[] {
                 return this._data[this._defaultName];
             }
 
@@ -338,7 +363,7 @@ module Asgard {
              * @returns {Date[]}
              * @private
              */
-            _disposeMinAndMaxDate(date:Date[]):Date[]{
+            _disposeMinAndMaxDate(date:Date[]):Date[] {
 
                 var minDate:Date = date[0],
                     maxDate:Date = date[1];
@@ -357,7 +382,7 @@ module Asgard {
              * @param price
              * @private
              */
-            _disposeMinAndMaxPrice(price:number[]):number[]{
+            _disposeMinAndMaxPrice(price:number[]):number[] {
 
                 var min = price[0],
                     max = price[1],
@@ -368,7 +393,6 @@ module Asgard {
                     max + diff
                 ];
             }
-
 
 
             /**
@@ -405,8 +429,8 @@ module Asgard {
              *
              * @returns {Date[]}
              */
-            getMinAndMaxDate():Date[]{
-                return this._disposeMinAndMaxDate(d3.extent(this.getDefaultData().map( (d:DataInterface) =>{
+            getMinAndMaxDate():Date[] {
+                return this._disposeMinAndMaxDate(d3.extent(this.getDefaultData().map((d:DataInterface) => {
                     return new Date(d.start);
                 })));
             }
@@ -437,7 +461,7 @@ module Asgard {
 
                 // 如果左边的值找不到，可能当前时间已经是最后条数据了,直接放回最后条数据
                 if (left === undefined) {
-                    return data[l- 1];
+                    return data[l - 1];
                 }
 
                 // 找当前时间的右边值
@@ -465,7 +489,7 @@ module Asgard {
              *
              * @returns {number}
              */
-            getCurrentPrice():number{
+            getCurrentPrice():number {
 
                 var currentData = this.getDefaultData()[0];
 
@@ -485,7 +509,7 @@ module Asgard {
              */
             getDataByDateRange(gtValue:any, ltValue:any):Object {
 
-                var data = {},emptyCount = 0,dataCount = 0;
+                var data = {}, emptyCount = 0, dataCount = 0;
 
                 for (var name in this._data) {
 
@@ -497,7 +521,7 @@ module Asgard {
                         }
                     });
 
-                    if(data[name].length === 0){
+                    if (data[name].length === 0) {
                         emptyCount++;
                     }
 
@@ -506,7 +530,7 @@ module Asgard {
 
 
                 // 所有数据都为空,则不判断范围返回所有数据
-                if(emptyCount === dataCount){
+                if (emptyCount === dataCount) {
                     return this._data;
                 }
 
@@ -546,7 +570,7 @@ module Asgard {
                 // min = Math.min(min,currentPrice);
                 // max = Math.max(max,currentPrice);
 
-                return this._disposeMinAndMaxPrice([min,max]);
+                return this._disposeMinAndMaxPrice([min, max]);
 
 
             }
@@ -836,14 +860,14 @@ module Asgard {
 
         export class Tips extends BaseComponent {
 
-            _show(tips:Tips,stock:Stock,data:StockData.DataInterface){
+            _show(tips:Tips, stock:Stock, data:StockData.DataInterface) {
 
-                var showContainerName = tips.getName + '-show',
+                var showContainerName = tips.getName() + '-show',
                     showContainer = stock.getContainer(showContainerName);
 
-                if(!showContainer){
+                if (!showContainer) {
                     showContainer = stock.getContainer('baseSvg').append('g');
-                    stock.addContainer(showContainerName,showContainer);
+                    stock.addContainer(showContainerName, showContainer);
                 }
 
                 // @todo:......
@@ -901,11 +925,12 @@ module Asgard {
                         y = d3.mouse(this)[1],
                         margin = stock.getMargin(),
                         width = stock.getWidth(),
-                        height = stock.getHeight();
+                        height = stock.getHeight(),
+                        visibilityClass = stock.getVisibilityClass();
 
                     if (x < margin.left || x > (margin.left + width) || y < margin.top || y > (margin.top + height)) {
-                        xLine.classed(stock.getHiddenClass(), true);
-                        yLine.classed(stock.getHiddenClass(), true);
+                        xLine.classed(visibilityClass, true);
+                        yLine.classed(visibilityClass, true);
                         return;
                     }
 
@@ -915,10 +940,10 @@ module Asgard {
 
                     var nearDataX = stock._xScale(nearData.start) + margin.left;
 
-                    xLine.attr('x1', 0).attr('y1', y).attr('x2', width).attr('y2', y).classed(stock.getHiddenClass(), false).attr('transform', 'translate(' + margin.left + ',0)');
-                    yLine.attr('x1', nearDataX).attr('y1', 0).attr('x2', nearDataX).attr('y2', height).classed(stock.getHiddenClass(), false).attr('transform', 'translate(0,' + margin.top + ')');
+                    xLine.attr('x1', 0).attr('y1', y).attr('x2', width).attr('y2', y).classed(visibilityClass, false).attr('transform', 'translate(' + margin.left + ',0)');
+                    yLine.attr('x1', nearDataX).attr('y1', 0).attr('x2', nearDataX).attr('y2', height).classed(visibilityClass, false).attr('transform', 'translate(0,' + margin.top + ')');
 
-                    tips._show.call(this,tips,stock,nearData,d3.mouse(this),this);
+                    tips._show.call(this, tips, stock, nearData, d3.mouse(this), this);
 
                 });
 
@@ -928,9 +953,9 @@ module Asgard {
         }
 
 
-        export class CurrentPriceLine extends BaseComponent{
+        export class CurrentPriceLine extends BaseComponent {
 
-            draw():ComponentInterface{
+            draw():ComponentInterface {
 
                 var selection:any = this._stock.getContainer(this._name).selectAll('line').data([this]),
                     yScale = this._stock.getYScale();
@@ -951,10 +976,10 @@ module Asgard {
                     y = yScale(currentPrice) + margin.top;
 
 
-                selection.attr("x1", margin.left )
+                selection.attr("x1", margin.left)
                     .attr("y1", y)
                     .attr("x2", this._stock.getWidth() + margin.left)
-                    .attr("y2", y).classed(this._stock.getHiddenClass(),y < margin.top || y > (margin.top + this._stock.getHeight()));
+                    .attr("y2", y).classed(this._stock.getHiddenClass(), y < margin.top || y > (margin.top + this._stock.getHeight()));
 
                 return this;
             }
@@ -1231,7 +1256,6 @@ module Asgard {
                         return d.start;
                     }
                 );
-
 
 
                 if (selection.empty()) {
@@ -1617,14 +1641,15 @@ module Asgard {
         _interval:string = '1D';
         _xScale:any;
         _yScale:any;
-        _containers = {};
-        _components = {};
-        _charts = {};
+        _containers:Object = {};
+        _components:Object = {};
+        _charts:Object = {};
         _dataContainer;
         _isZoom:boolean;
         _zoom:D3.Behavior.Zoom;
         _sync:Stock[] = [];
         _hiddenClass:string = name + '-hide';
+        _visibilityClass:string = name + '-visibility-hidden';
 
         constructor(selection:any, options:any) {
 
@@ -1656,7 +1681,7 @@ module Asgard {
          * @returns {any}
          * @private
          */
-        _convertSelection(selection:any):D3.Selection{
+        _convertSelection(selection:any):D3.Selection {
             return selection instanceof d3.selection ? selection : d3.select(selection);
         }
 
@@ -1670,45 +1695,46 @@ module Asgard {
          * @returns {Asgard.Stock}
          * @private
          */
-        _zoomDragLimit():Stock{
+        _zoomDragLimit():Stock {
 
             var baseSvg = this.getContainer('baseSvg'),
                 stock = this,
                 dragged = false,
                 startX;
 
-            baseSvg.addEventListener('mousedown',function(){
+            baseSvg.addEventListener('mousedown', function () {
                 dragged = true;
                 startX = d3.mouse(this)[0];
 
                 var windowSelection = d3.select(window);
 
-                var mouseupListener = function(){
+                var mouseupListener = function () {
                     dragged = false;
-                    windowSelection['removeEventListener']('mouseup',mouseupListener);
+                    windowSelection['removeEventListener']('mouseup', mouseupListener);
                 }
 
-                windowSelection['addEventListener']('mouseup',mouseupListener);
+                windowSelection['addEventListener']('mouseup', mouseupListener);
 
             });
 
 
-            baseSvg.addEventListener('mousemove',function(){
+            baseSvg.addEventListener('mousemove', function () {
 
-                var moveX  = d3.mouse(this)[0],
+                // @todo 如果未draw。。getDataContainer会出问题
+
+                var moveX = d3.mouse(this)[0],
                     domain = stock.getXScale().domain(),
                     minAndMaxDate = stock.getDataContainer().getMinAndMaxDate(),
                     minDate = minAndMaxDate[0],
                     maxDate = minAndMaxDate[1];
 
                 // 当前的时间小于数据的最小时间，并且drag方向是往左
-                if(domain[0] < minDate && startX < moveX){
+                if (domain[0] < minDate && startX < moveX) {
                     d3.event.stopPropagation();
                 }
 
                 // 当前的时间大于数据的最大时间，并且drag方向是往右
-                if(domain[1] > maxDate && startX > moveX){
-                    console.log(1);
+                if (domain[1] > maxDate && startX > moveX) {
                     d3.event.stopPropagation()
                 }
 
@@ -1735,7 +1761,8 @@ module Asgard {
             baseSvg.call(this._zoom);
 
             this._zoomDragLimit();
-            this.zoom(():void=> {});
+            this.zoom(():void=> {
+            });
             return this;
         }
 
@@ -1931,6 +1958,14 @@ module Asgard {
             return this;
         }
 
+        getComponents():Object {
+            return this._components;
+        }
+
+        getCharts():Object {
+            return this._charts;
+        }
+
         getInterval():string {
             return this._interval;
 
@@ -1961,12 +1996,107 @@ module Asgard {
             return this._zoom;
         }
 
+        clearData():Stock {
+
+            // 清除数据，清除all charts，清除对应的container
+            this._dataContainer = new StockData.DataContainer(this);
+
+            for (var name in this._charts) {
+                this._containers[name].remove();
+                delete this._containers[name];
+            }
+
+            this._charts = {};
+
+            return this;
+        }
+
         getDataContainer():StockData.DataContainer {
             return this._dataContainer;
         }
 
         getHiddenClass():string {
             return this._hiddenClass;
+        }
+
+        getVisibilityClass():string {
+            return this._visibilityClass;
+        }
+
+        setVisibilityClass(visibilityClass:string):Stock {
+            this._visibilityClass = visibilityClass;
+            return this;
+        }
+
+        containerIsHide(name:string):boolean {
+
+            return this._containers[name].classed(this._hiddenClass);
+        }
+
+        hideContainer(name:string):Stock {
+
+            this._containers[name].classed(this._hiddenClass, true);
+
+            return this;
+        }
+
+
+        removeContainer(name:string):Stock {
+            this._containers[name].remove();
+            delete this._containers[name];
+            return this;
+        }
+
+        showContainer(name:string):Stock {
+
+            this._containers[name].classed(this._hiddenClass, false);
+
+            return this;
+        }
+
+        toggleContainer(name:string):Stock {
+            this._containers[name].classed(this._hiddenClass, !this.hideContainer(name));
+            return this;
+        }
+
+        removeComponent(name:string):Stock {
+
+            this.removeContainer(name);
+
+            delete this._components[name];
+
+            return this;
+        }
+
+        removeData(name:string):Stock {
+
+            this._dataContainer.removeData(name);
+
+            return this;
+        }
+
+        removeChart(name:string):Stock {
+
+            var chart = this._charts[name],
+                dataName = chart.getDataName(),
+                hasUse = false;
+
+            delete this._charts[name];
+            this.removeContainer(name);
+
+            // 如果其他组件也在用dataName,则不删除该data,否者删除该data
+            for (var name in this._charts) {
+                if (this._charts[name].getDataName() === dataName) {
+                    hasUse = true;
+                    break;
+                }
+            }
+
+            if (!hasUse) {
+                this.removeData(dataName);
+            }
+
+            return this;
         }
 
     }

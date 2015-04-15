@@ -14,99 +14,49 @@
 </head>
 <body ng-app="asgard">
 
-<div class="container" ng-controller="exampleController">
-
-    {{a}}
-
-    <div class="row">
-        <div class="col-sm-3">
-        <select class="form-control" ng-model="currentChannel">
-            <option value="-1">选择一个频道</option>
-            <option value="{{channel}}" ng-repeat="channel in channels">{{channel}}</option>
-        </select>
+<nav class="navbar navbar-default" ng-controller="exampleController">
+    <div class="container">
+        <div class="collapse navbar-collapse">
+            <form class="navbar-form navbar-left">
+                <div class="form-group">
+                    <select class="form-control" ng-model="currentSymbol" ng-options="finance.symbol as finance.name for finance in finances"></select>
+                </div>
+                <div class="form-group">
+                    <select class="form-control" ng-model="currentInterval" ng-options="interval for interval in intervals"></select>
+                </div>
+                <button type="button" class="btn btn-primary" ng-click="add()">添加</button>
+                <button type="button" class="btn btn-success" ng-click="compare()">比较</button>
+            </form>
+        </div>
+        <div class="collapse navbar-collapse">
+            <form class="navbar-form navbar-left">
+                <div class="form-group" ng-show="asgard">
+                    <h5>Containers</h5>
+                    <select ng-show="showContainers.length > 1" class="form-control" ng-model="currentShowContainer" ng-options="name as name for name in showContainers"></select>
+                    <button ng-show="showContainers.length > 1 && currentShowContainer !== message.SHOW_CONTAINER" type="button" class="btn btn-danger" ng-click="hide()">隐藏</button>
+                    <select ng-show="hideContainers.length > 1" class="form-control" ng-model="currentHideContainer" ng-options="name as name for name in hideContainers"></select>
+                    <button ng-show="hideContainers.length > 1 && currentHideContainer !== message.HIDE_CONTAINER" type="button" class="btn btn-danger" ng-click="show()">显示</button>
+                </div>
+                <div class="form-group" ng-show="asgard">
+                    <h5>Components</h5>
+                    <select ng-show="useComponents.length > 1" class="form-control" ng-model="currentUseComponent" ng-options="name as name for name in useComponents"></select>
+                    <button ng-show="useComponents.length > 1 && currentUseComponent !== message.USE_COMPONENT" type="button" class="btn btn-danger" ng-click="removeComponent()">移除</button>
+                </div>
+                <div class="form-group" ng-show="asgard">
+                    <h5>Charts</h5>
+                    <select ng-show="useCharts.length > 1" class="form-control" ng-model="currentUseChart" ng-options="name as name for name in useCharts"></select>
+                    <button ng-show="useCharts.length > 1 && currentUseChart !== message.USE_CHART" type="button" class="btn btn-danger" ng-click="removeChart()">移除</button>
+                </div>
+           </form>
+        </div>
     </div>
+</nav>
 
-    </div>
-
-
-    <div id="svg" style="overflow:hidden;">
+<div class="container">
+    <div id="svg">
 
     </div>
 </div>
-
-<script>
-
-    function getApi(symbol,interval,rows){
-        var interval = '1', rows = 1000;
-        return 'http://api.markets.wallstreetcn.com:80/v1/chart.json?symbol=' + symbol + '&interval=' + interval + '&rows=' + rows;
-    }
-
-
-    var stock;
-
-    $.get(getApi('XAUUSD'), function (data) {
-        stock = new Asgard.Stock('#svg', {
-            margin:{
-                left:0,
-                top:50,
-                bottom:65,
-                right:70
-            },
-            isZoom: true,
-            interval: '1',
-            data: [
-                {
-                    name: 'XAUUSD',
-                    data: data.results
-                }
-            ],
-            components: [
-                {
-                    name: 'axis-bottom',
-                    type: 'axis',
-                    orient: 'bottom'
-                },
-                {
-                    name: 'axis-right',
-                    type: 'axis',
-                    orient: 'right'
-                },
-                {
-                    name: 'grid-x',
-                    type: 'grid',
-                    orient: 'x'
-                },
-                {
-                    name: 'grid-y',
-                    type: 'grid',
-                    orient: 'y'
-                },
-                {
-                    name: 'tips',
-                    type: 'tips'
-                },
-                {
-                    name: 'current-price-line',
-                    type: 'currentPriceLine',
-                }
-            ],
-            charts: [
-
-                {
-                    name: 'XAUUSD-Candle',
-                    type: 'Candle',
-                    dataName: 'XAUUSD'
-                }
-            ]
-
-        });
-
-        stock.draw();
-
-    }, 'jsonp');
-
-
-</script>
 
 
 
