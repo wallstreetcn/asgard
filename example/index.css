@@ -19,3 +19,8 @@ body{
 .left-options .input-group-addon{
     width: 72px;
 }
+
+.left-options .error-operate p{
+    padding:15px 5px;
+    color:#000;
+}

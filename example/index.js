@@ -13,7 +13,10 @@ angular.module('asgard', [])
             USE_COMPONENT: '已使用',
             USE_CHART: '已使用',
             USE_DATA: '已使用',
-            USE_UNUSED_COMPONENT: '未使用'
+            USE_UNUSED_COMPONENT: '未使用',
+            NONE_SELECTED_REMOVE_CHART:'请选择需要删除的Chart',
+            NONE_SELECTED_REMOVE_COMPONENT:'请选择需要删除的Component',
+            NONE_SELECTED_REMOVE_DATA:'请选择需要删除的Data'
         }
 
         $scope.charts = [
@@ -83,6 +86,7 @@ angular.module('asgard', [])
             '1', '5', '15', '30', '1D', '1h', '4h', '1W', '1M'
         ];
 
+        $scope.errorMessage = null;
         $scope.currentChart = 'Candle';
         $scope.currentInterval = '1D';
         $scope.currentSymbol = 'sh000001';
@@ -101,8 +105,8 @@ angular.module('asgard', [])
         }
 
         $scope.asgard = false;
-        $scope.currentWidth = false;
-        $scope.currentHeight = false;
+        $scope.currentWidth = 0;
+        $scope.currentHeight = 0;
         $scope.currentMarginLeft = 0;
         $scope.currentMarginTop = 50;
         $scope.currentMarginBottom = 65;
@@ -123,6 +127,8 @@ angular.module('asgard', [])
         $scope.useCharts = [];
 
         var updateNames = function () {
+
+            $scope.errorMessage = false;
 
             $scope.currentShowContainer = $scope.messages.SHOW_CONTAINER;
             $scope.currentHideContainer = $scope.messages.HIDE_CONTAINER;
@@ -185,8 +191,6 @@ angular.module('asgard', [])
                 }
             }
 
-            console.log($scope.unusedComponents);
-
         }
 
 
@@ -202,6 +206,7 @@ angular.module('asgard', [])
                         right: $scope.currentMarginRight
                     },
                     isZoom: true,
+                    debug:true,
                     components: $scope.currentComponents
                 });
             }
@@ -244,10 +249,16 @@ angular.module('asgard', [])
         $scope.removeData = function () {
 
             if ($scope.currentUseData === $scope.messages.USE_DATA) {
+                $scope.errorMessage = $scope.messages.NONE_SELECTED_REMOVE_DATA;
                 return;
             }
 
-            $scope.asgard.removeData($scope.currentUseData);
+            try{
+                $scope.asgard.removeData($scope.currentUseData);
+            }catch (e){
+                $scope.errorMessage = e.message;
+                return;
+            }
 
             updateNames();
 
@@ -257,10 +268,16 @@ angular.module('asgard', [])
         $scope.removeChart = function () {
 
             if ($scope.currentUseChart === $scope.messages.USE_CHART) {
+                $scope.errorMessage = $scope.messages.NONE_SELECTED_REMOVE_CHART;
                 return;
             }
 
-            $scope.asgard.removeChart($scope.currentUseChart);
+            try{
+                $scope.asgard.removeChart($scope.currentUseChart);
+            }catch(e){
+                $scope.errorMessage = e.message;
+                return;
+            }
 
             updateNames();
 
@@ -271,6 +288,7 @@ angular.module('asgard', [])
         $scope.removeComponent = function () {
 
             if ($scope.currentUseComponent === $scope.messages.USE_COMPONENT) {
+                $scope.errorMessage = $scope.messages.NONE_SELECTED_REMOVE_COMPONENT;
                 return;
             }
 

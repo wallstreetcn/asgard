@@ -237,6 +237,22 @@ module Asgard {
                 });
             }
 
+
+            dataChange():DataContainer{
+
+                var stock = this._stock,
+                    xScale = stock.getXScale(),
+                    yScale = stock.getYScale();
+
+                xScale.domain(this.getXdomain());
+                yScale.domain(this.getYdomain());
+
+                stock.isZoom() && stock.getZoom().x(xScale);
+
+                return this;
+            }
+
+
             /**
              * 添加一个数据
              *
@@ -257,6 +273,9 @@ module Asgard {
 
                 this._originData[options.name] = options.data;
                 this._data[options.name] = this.format(options.data);
+
+                this.dataChange();
+
                 return this;
             }
 
@@ -272,6 +291,8 @@ module Asgard {
                 delete this._data[name];
                 delete this._originData[name];
 
+                this.dataChange();
+                
                 return this;
             }
 
@@ -300,9 +321,10 @@ module Asgard {
              *
              * @returns {string}
              */
-            getDefaultDataName():string{
+            getDefaultDataName():string {
                 return this._defaultDataName;
             }
+
             /**
              * 获取默认数据
              *
@@ -631,6 +653,7 @@ module Asgard {
 
                 var container = this._stock.getContainer(this._name);
 
+                // @todo : 是否要考虑可以设置插入前还是插入后
                 if (!container) {
                     container = this._stock
                         .getContainer('baseSvg')
@@ -1660,12 +1683,14 @@ module Asgard {
         _sync:Stock[] = [];
         _hiddenClass:string = name + '-hide';
         _visibilityClass:string = name + '-visibility-hidden';
+        _debug:boolean = false;
 
         constructor(selection:any, options:any) {
 
             selection = this._convertSelection(selection);
 
             // 重要的options
+            options.debug && (this._debug = options.debug);
             options.margin && (this._margin = options.margin);
 
             this._width = (options.width || (selection.node().clientWidth || document.documentElement.clientWidth)) - this._margin.left - this._margin.right;
@@ -1875,7 +1900,6 @@ module Asgard {
             return this;
         }
 
-
         addData(options:StockDataOptionsInterface):Stock {
 
             if (!this._dataContainer) {
@@ -1883,11 +1907,6 @@ module Asgard {
             }
 
             this._dataContainer.addData(options);
-
-            this._xScale.domain(this._dataContainer.getXdomain());
-            this._yScale.domain(this._dataContainer.getYdomain());
-
-            this.isZoom() && this._zoom.x(this._xScale);
 
             return this;
         }
@@ -2074,6 +2093,15 @@ module Asgard {
             return this;
         }
 
+        isDebug():boolean {
+            return this._debug;
+        }
+
+        setDebug(debug:boolean):Stock {
+            this._debug = debug;
+            return this;
+        }
+
         removeComponent(name:string):Stock {
 
             this.removeContainer(name);
@@ -2084,10 +2112,15 @@ module Asgard {
         }
 
 
-        removeData(name:string):Stock{
+        removeData(name:string):Stock {
 
             // 默认数据肯定不能删除
-            if(this._dataContainer.getDefaultDataName() === name){
+            if (this._dataContainer.getDefaultDataName() === name) {
+
+                if(this.isDebug()){
+                    throw new Error('默认数据 '+name+' 无法删除');
+                }
+
                 return this;
             }
 
@@ -2116,19 +2149,24 @@ module Asgard {
                 defaultName = this._dataContainer.getDefaultDataName(),
                 hasOtherUse = false;
 
-            // 检查除了自己需要以为的chart是否还有用该data
+            // 检查除了自己以外的chart是否还有用该dataName
             for (var chartName in this._charts) {
                 if (chartName !== name && this._charts[chartName].getDataName() === defaultName) {
                     hasOtherUse = true;
+                    break;
                 }
             }
 
-
             // 如果是defaultName，并且不存在其他chart,该chart不能删除
-            if(dataName === defaultName){
+            if (dataName === defaultName) {
 
                 // 不存在其他chart,该chart不能删除
-                if(!hasOtherUse){
+                if (!hasOtherUse) {
+
+                    if(this.isDebug()){
+                        throw new Error('名字为' + name + '的Chart绑定了默认的数据(' + defaultName+ ')，且默认数据没有与其他的Chart绑定，Chart无法删除');
+                    }
+
                     return this;
                 }
 
@@ -2139,7 +2177,7 @@ module Asgard {
             this.removeContainer(name);
 
             // 如果数据不是defaultName,并且不存在其他chart,可以删除数据
-            if(hasOtherUse){
+            if (dataName !== defaultName && hasOtherUse) {
                 // removeData中也有调用removeChart,不过已经没有其他chart引用该dataName,所以不会有死循环调用
                 this.removeData(dataName);
             }

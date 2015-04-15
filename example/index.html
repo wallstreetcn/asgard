@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head lang="en">
     <meta charset="UTF-8">
 
@@ -126,6 +126,11 @@
                 </div>
             </form>
         </div>
+
+        <div class="error-operate" ng-show="asgard && errorMessage">
+            <p class="bg-danger">{{errorMessage}}</p>
+        </div>
+
 </div>
 
 <div class="right-stock">
