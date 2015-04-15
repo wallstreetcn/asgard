@@ -14,9 +14,9 @@ angular.module('asgard', [])
             USE_CHART: '已使用',
             USE_DATA: '已使用',
             USE_UNUSED_COMPONENT: '未使用',
-            NONE_SELECTED_REMOVE_CHART:'请选择需要删除的Chart',
-            NONE_SELECTED_REMOVE_COMPONENT:'请选择需要删除的Component',
-            NONE_SELECTED_REMOVE_DATA:'请选择需要删除的Data'
+            NONE_SELECTED_REMOVE_CHART: '请选择需要删除的Chart',
+            NONE_SELECTED_REMOVE_COMPONENT: '请选择需要删除的Component',
+            NONE_SELECTED_REMOVE_DATA: '请选择需要删除的Data'
         }
 
         $scope.charts = [
@@ -77,8 +77,24 @@ angular.module('asgard', [])
                 symbol: 'sh000001'
             },
             {
+                name: '平安银行',
+                symbol: 'SZ000001'
+            },
+            {
                 name: '黄金',
                 symbol: 'XAUUSD'
+            },
+            {
+                name: '美国10年期国债',
+                symbol: 'US10YEAR'
+            },
+            {
+                name: '恒生指数',
+                symbol: 'HKG33'
+            },
+            {
+                name: '美元指数',
+                symbol: 'USDOLLARINDEX'
             }
         ];
 
@@ -93,9 +109,9 @@ angular.module('asgard', [])
         $scope.currentComponents = [];
 
         // init default components
-        for(var key in $scope.components){
+        for (var key in $scope.components) {
             var component = $scope.components[key];
-            switch (component.name){
+            switch (component.name) {
                 case 'axis-top':
                 case 'axis-left':
                     break;
@@ -197,16 +213,16 @@ angular.module('asgard', [])
         var initAsgard = function () {
             if (!$scope.asgard) {
                 $scope.asgard = new Asgard.Stock('#svg', {
-                    width:$scope.currentWidth,
+                    width: $scope.currentWidth,
                     height: $scope.currentHeight,
                     margin: {
-                        left:  $scope.currentMarginLeft ,
+                        left: $scope.currentMarginLeft,
                         top: $scope.currentMarginTop,
                         bottom: $scope.currentMarginBottom,
                         right: $scope.currentMarginRight
                     },
                     isZoom: true,
-                    debug:true,
+                    debug: true,
                     components: $scope.currentComponents
                 });
             }
@@ -226,7 +242,7 @@ angular.module('asgard', [])
         }
 
 
-        $scope.addComponent = function(){
+        $scope.addComponent = function () {
 
             if ($scope.currentUnusedComponent === $scope.messages.USE_UNUSED_COMPONENT) {
                 return;
@@ -234,8 +250,8 @@ angular.module('asgard', [])
 
             var components = $scope.components;
 
-            for(var key in components){
-                if(components[key].name === $scope.currentUnusedComponent){
+            for (var key in components) {
+                if (components[key].name === $scope.currentUnusedComponent) {
                     $scope.asgard.addComponent(components[key]);
                     break;
                 }
@@ -253,9 +269,9 @@ angular.module('asgard', [])
                 return;
             }
 
-            try{
+            try {
                 $scope.asgard.removeData($scope.currentUseData);
-            }catch (e){
+            } catch (e) {
                 $scope.errorMessage = e.message;
                 return;
             }
@@ -272,9 +288,9 @@ angular.module('asgard', [])
                 return;
             }
 
-            try{
+            try {
                 $scope.asgard.removeChart($scope.currentUseChart);
-            }catch(e){
+            } catch (e) {
                 $scope.errorMessage = e.message;
                 return;
             }

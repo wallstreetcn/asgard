@@ -292,7 +292,7 @@ module Asgard {
                 delete this._originData[name];
 
                 this.dataChange();
-                
+
                 return this;
             }
 
@@ -2151,7 +2151,7 @@ module Asgard {
 
             // 检查除了自己以外的chart是否还有用该dataName
             for (var chartName in this._charts) {
-                if (chartName !== name && this._charts[chartName].getDataName() === defaultName) {
+                if (chartName !== name && this._charts[chartName].getDataName() === dataName) {
                     hasOtherUse = true;
                     break;
                 }
@@ -2177,7 +2177,7 @@ module Asgard {
             this.removeContainer(name);
 
             // 如果数据不是defaultName,并且不存在其他chart,可以删除数据
-            if (dataName !== defaultName && hasOtherUse) {
+            if (dataName !== defaultName && !hasOtherUse) {
                 // removeData中也有调用removeChart,不过已经没有其他chart引用该dataName,所以不会有死循环调用
                 this.removeData(dataName);
             }

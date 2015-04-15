@@ -62,8 +62,8 @@
                     <select multiple size="9" class="form-control" ng-model="currentComponents" ng-options="component.name for component in components">
                     </select>
                 </div>
-                <button type="button" class="btn btn-primary" ng-click="add()">{{asgard?'更新':'添加'}}</button>
-                <button type="button" class="btn btn-success" ng-click="compare()">比较</button>
+                <button type="button" class="btn btn-primary" ng-click="add()">{{asgard?'更新':'生成'}}</button>
+                <button type="button" class="btn btn-success" ng-show="asgard" ng-click="compare()">比较</button>
             </form>
         </div>
 
