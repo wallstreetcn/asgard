@@ -202,7 +202,7 @@ module Asgard {
         export class DataContainer {
 
             _stock:Stock;
-            _defaultName:string;
+            _defaultDataName:string;
             _originData:{[name:string]:Object[]} = {};
             _data:{[name:string]:DataInterface[]} = {};
 
@@ -248,11 +248,11 @@ module Asgard {
             addData(options:StockDataOptionsInterface):DataContainer {
 
                 if (options.isDefault) {
-                    this._defaultName = options.name;
+                    this._defaultDataName = options.name;
                 }
 
-                if (!this._defaultName) {
-                    this._defaultName = options.name;
+                if (!this._defaultDataName) {
+                    this._defaultDataName = options.name;
                 }
 
                 this._originData[options.name] = options.data;
@@ -261,45 +261,55 @@ module Asgard {
             }
 
             /**
-             * 移除数据
+             * 移除数据 ,不允许删除默认数据
              *
-             * 如果数据是defaultName 则删除defaultName
+             * 如果数据是defaultDataName 则删除defaultDataName
              * @param name
              * @returns {Asgard.StockData.DataContainer}
              */
             removeData(name:string):DataContainer {
 
-                console.log(this);
-
-                if (name === this._defaultName) {
-                    this._defaultName = null;
-                }
-
                 delete this._data[name];
                 delete this._originData[name];
-
-
 
                 return this;
             }
 
             /**
-             * 获取数据
+             * 根据name获取数据
              *
              * @param name
              * @returns {DataInterface[]}
              */
-            getData(name:string):DataInterface[] {
+            getDataByName(name:string):DataInterface[] {
                 return this._data[name];
             }
 
+
+            /**
+             * 获取格式化后数据
+             *
+             * @returns {{}}
+             */
+            getData():{[name:string]:DataInterface[]} {
+                return this._data;
+            }
+
+            /**
+             * 获取默认数据名
+             *
+             * @returns {string}
+             */
+            getDefaultDataName():string{
+                return this._defaultDataName;
+            }
             /**
              * 获取默认数据
              *
              * @returns {DataInterface[]}
              */
             getDefaultData():DataInterface[] {
-                return this._data[this._defaultName];
+                return this._data[this._defaultDataName];
             }
 
             /**
@@ -338,7 +348,7 @@ module Asgard {
              */
             getXdomain():Date[] {
 
-                var data = this.getData(this._defaultName);
+                var data = this.getDataByName(this._defaultDataName);
 
                 if (this._stock.isZoom()) {
                     data = Array.prototype.slice.apply(data, [0, this.getShowCount()]);
@@ -444,7 +454,7 @@ module Asgard {
              */
             getNearDataByDate(date:Date) {
 
-                var data:DataInterface[] = this._data[this._defaultName],
+                var data:DataInterface[] = this._data[this._defaultDataName],
                     l:number = data.length,
                     i:number,
                     left:number,
@@ -1136,7 +1146,7 @@ module Asgard {
             draw():ChartInterface {
 
                 var svg = this._createSvg(),
-                    data = this._stock.getDataContainer().getData(this._dataName),
+                    data = this._stock.getDataContainer().getDataByName(this._dataName),
                     selection:any = this._stock.getContainer(this._name).selectAll('path').data(data);
 
                 if (selection.empty()) {
@@ -1227,7 +1237,7 @@ module Asgard {
                 var selection:any = this._stock.getContainer(this._name)
                     .selectAll('path')
                     .data(
-                    this._stock.getDataContainer().getData(this._dataName)
+                    this._stock.getDataContainer().getDataByName(this._dataName)
                     , (d:StockData.DataInterface):number => {
                         return d.start;
                     }
@@ -1251,7 +1261,7 @@ module Asgard {
                 var selection:any = this._stock.getContainer(this._name)
                     .selectAll('rect')
                     .data(
-                    this._stock.getDataContainer().getData(this._dataName),
+                    this._stock.getDataContainer().getDataByName(this._dataName),
                     (d:StockData.DataInterface):number=> {
                         return d.start;
                     }
@@ -1336,7 +1346,7 @@ module Asgard {
                     selection:any = this._stock.getContainer(this._name)
                         .selectAll('path.' + className)
                         .data(
-                        this._stock.getDataContainer().getData(this._dataName)
+                        this._stock.getDataContainer().getDataByName(this._dataName)
                         , (d:StockData.DataInterface):number => {
                             return d.start;
                         }
@@ -1414,7 +1424,7 @@ module Asgard {
                     selection:any = this._stock.getContainer(this._name)
                         .selectAll('path.' + className)
                         .data(
-                        this._stock.getDataContainer().getData(this._dataName)
+                        this._stock.getDataContainer().getDataByName(this._dataName)
                         , (d:StockData.DataInterface):number => {
                             return d.start;
                         }
@@ -1454,7 +1464,7 @@ module Asgard {
                     selection:any = this._stock.getContainer(this._name)
                         .selectAll('rect.' + className)
                         .data(
-                        this._stock.getDataContainer().getData(this._dataName),
+                        this._stock.getDataContainer().getDataByName(this._dataName),
                         (d:StockData.DataInterface):number=> {
                             return d.start;
                         }
@@ -1520,7 +1530,7 @@ module Asgard {
                     selection:any = this._stock.getContainer(this._name)
                         .selectAll('rect.' + className)
                         .data(
-                        this._stock.getDataContainer().getData(this._dataName),
+                        this._stock.getDataContainer().getDataByName(this._dataName),
                         (d:StockData.DataInterface):number=> {
                             return d.start;
                         }
@@ -1583,7 +1593,7 @@ module Asgard {
                     selection:any = this._stock.getContainer(this._name)
                         .selectAll('rect.' + className)
                         .data(
-                        this._stock.getDataContainer().getData(this._dataName),
+                        this._stock.getDataContainer().getDataByName(this._dataName),
                         (d:StockData.DataInterface):number=> {
                             return d.start;
                         }
@@ -2075,26 +2085,37 @@ module Asgard {
             return this;
         }
 
-        removeChart(name:string):Stock {
 
-            var chart = this._charts[name],
-                dataName = chart.getDataName(),
-                hasUse = false;
+        removeData(name:string):Stock{
 
-            delete this._charts[name];
-            this.removeContainer(name);
+            // 默认数据肯定不能删除
+            if(this._dataContainer.getDefaultDataName() === name){
+                return ;
+            }
 
-            // 如果其他组件也在用dataName,则不删除该data,否者删除该data
-            for (var name in this._charts) {
-                if (this._charts[name].getDataName() === dataName) {
-                    hasUse = true;
-                    break;
+            // 删除数据对应的chart
+            for (var chartName in this._charts) {
+                if (this._charts[chartName].getDataName() === name) {
+                    this.removeChart(chartName);
                 }
             }
 
-            if (!hasUse) {
-                this.removeData(dataName);
-            }
+            this._dataContainer.removeData(name);
+
+            return this;
+        }
+
+
+        /**
+         * 移除chart就ok
+         *
+         * @param name
+         * @returns {Asgard.Stock}
+         */
+        removeChart(name:string):Stock {
+
+            delete this._charts[name];
+            this.removeContainer(name);
 
             return this;
         }

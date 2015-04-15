@@ -11,8 +11,13 @@ angular.module('asgard', [])
             SHOW_CONTAINER:'已显示的',
             HIDE_CONTAINER:'已隐藏的',
             USE_COMPONENT:'已使用',
-            USE_CHART:'已使用'
+            USE_CHART:'已使用',
+            USE_DATA:'已使用'
         }
+
+        $scope.charts = [
+            'Line','Area','Candle','HollowCandle','Bars',
+        ];
 
         $scope.finances = [
             {
@@ -29,6 +34,7 @@ angular.module('asgard', [])
             '1','5','15','30','1D','1h','4h','1W','1M'
         ];
 
+        $scope.currentChart = 'Candle';
         $scope.currentInterval = '1D';
         $scope.currentSymbol = 'sh000001';
         $scope.asgard = false;
@@ -42,7 +48,10 @@ angular.module('asgard', [])
         $scope.currentHideContainer = $scope.messages.HIDE_CONTAINER;
         $scope.currentUseComponent = $scope.messages.USE_COMPONENT;
         $scope.currentUseChart = $scope.messages.USE_CHART;
+        $scope.currentUseData = $scope.messages.USE_DATA;
 
+
+        $scope.useData = [];
         $scope.showContainers = [];
         $scope.hideContainers = [];
         $scope.useComponents = [];
@@ -54,16 +63,22 @@ angular.module('asgard', [])
             $scope.currentHideContainer = $scope.messages.HIDE_CONTAINER;
             $scope.currentUseComponent = $scope.messages.USE_COMPONENT;
             $scope.currentUseChart = $scope.messages.USE_CHART;
+            $scope.currentUseData = $scope.messages.USE_DATA;
 
             $scope.showContainers = [$scope.messages.SHOW_CONTAINER];
             $scope.hideContainers = [$scope.messages.HIDE_CONTAINER];
             $scope.useComponents = [$scope.messages.USE_COMPONENT];
             $scope.useCharts = [$scope.messages.USE_CHART];
+            $scope.useData = [$scope.messages.USE_DATA];
 
             var charts = $scope.asgard.getCharts(),
                 components = $scope.asgard.getComponents(),
                 containers = $scope.asgard.getContainers(),
-                name;
+                data = $scope.asgard.getDataContainer().getData();
+
+            for(name in data){
+                $scope.useData.push(name);
+            }
 
             for(name in charts){
                 $scope.useCharts.push(name);
@@ -153,6 +168,17 @@ angular.module('asgard', [])
         }
 
 
+        $scope.removeData = function(){
+
+            if($scope.currentUseData === $scope.messages.USE_DATA){
+                return;
+            }
+
+            $scope.asgard.removeData($scope.currentUseData);
+
+            updateNames();
+        }
+
         $scope.removeChart = function(){
 
             if($scope.currentUseChart === $scope.messages.USE_CHART){
@@ -217,8 +243,8 @@ angular.module('asgard', [])
                 });
 
                 $scope.asgard.addChart({
-                    name:$scope.currentSymbol + '-candle',
-                    type:'candle',
+                    name:$scope.currentSymbol + '-' + $scope.currentChart,
+                    type:$scope.currentChart,
                     dataName:$scope.currentSymbol
                 });
 
@@ -249,8 +275,8 @@ angular.module('asgard', [])
                 });
 
                 $scope.asgard.addChart({
-                    name:$scope.currentSymbol + '-line',
-                    type:'line',
+                    name:$scope.currentSymbol + '-' + $scope.currentChart,
+                    type:$scope.currentChart,
                     dataName:$scope.currentSymbol
                 });
 
