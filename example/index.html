@@ -11,56 +11,82 @@
     <script src="index.js"></script>
     <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="../dist/css/theme/default.css"/>
+    <link rel="stylesheet" href="index.css"/>
 </head>
 <body ng-app="asgard">
 
-<nav class="navbar navbar-default" ng-controller="exampleController">
-    <div class="container">
-        <div class="collapse navbar-collapse">
-            <form class="navbar-form navbar-left">
+<div class="left-options" ng-controller="exampleController">
+        <div class="form-group">
+            <form>
                 <div class="form-group">
+                    <label>Symbol</label>
                     <select class="form-control" ng-model="currentSymbol" ng-options="finance.symbol as finance.name for finance in finances"></select>
                 </div>
                 <div class="form-group">
+                    <label>Interval</label>
                     <select class="form-control" ng-model="currentInterval" ng-options="interval for interval in intervals"></select>
                 </div>
                 <div class="form-group">
+                    <label>Chart</label>
                     <select class="form-control" ng-model="currentChart" ng-options="chart for chart in charts"></select>
                 </div>
                 <button type="button" class="btn btn-primary" ng-click="add()">添加</button>
                 <button type="button" class="btn btn-success" ng-click="compare()">比较</button>
             </form>
         </div>
-        <div class="collapse navbar-collapse">
-            <form class="navbar-form navbar-left">
-                <div class="form-group" ng-show="asgard && (showContainers.length > 1 || hideContainers.length > 1)">
-                    <h5>Containers</h5>
+
+        <div class="form-group" ng-show="asgard && showContainers.length > 1">
+            <h5>Containers</h5>
+            <form class="form-inline">
+                <div class="form-group">
                     <select ng-show="showContainers.length > 1" class="form-control" ng-model="currentShowContainer" ng-options="name as name for name in showContainers"></select>
                     <button ng-show="showContainers.length > 1 && currentShowContainer !== message.SHOW_CONTAINER" type="button" class="btn btn-danger" ng-click="hide()">隐藏</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-group" ng-show="asgard && hideContainers.length > 1">
+            <h5 ng-show="asgard && showContainers.length <= 1">Containers</h5>
+            <form class="form-inline">
+                <div class="form-group">
                     <select ng-show="hideContainers.length > 1" class="form-control" ng-model="currentHideContainer" ng-options="name as name for name in hideContainers"></select>
                     <button ng-show="hideContainers.length > 1 && currentHideContainer !== message.HIDE_CONTAINER" type="button" class="btn btn-danger" ng-click="show()">显示</button>
                 </div>
-                <div class="form-group" ng-show="asgard && useComponents.length > 1">
-                    <h5>Components</h5>
+            </form>
+        </div>
+
+        <div class="form-group" ng-show="asgard && useComponents.length > 1">
+            <h5>Components</h5>
+            <form class="form-inline">
+                <div class="form-group">
                     <select ng-show="useComponents.length > 1" class="form-control" ng-model="currentUseComponent" ng-options="name as name for name in useComponents"></select>
                     <button ng-show="useComponents.length > 1 && currentUseComponent !== message.USE_COMPONENT" type="button" class="btn btn-danger" ng-click="removeComponent()">移除</button>
                 </div>
-                <div class="form-group" ng-show="asgard && useCharts.length > 1">
-                    <h5>Charts</h5>
+            </form>
+        </div>
+
+        <div class="form-group" ng-show="asgard && useCharts.length > 1">
+            <h5>Charts</h5>
+            <form class="form-inline">
+                <div class="form-group">
                     <select ng-show="useCharts.length > 1" class="form-control" ng-model="currentUseChart" ng-options="name as name for name in useCharts"></select>
                     <button ng-show="useCharts.length > 1 && currentUseChart !== message.USE_CHART" type="button" class="btn btn-danger" ng-click="removeChart()">移除</button>
                 </div>
-                <div class="form-group" ng-show="asgard && useData.length > 1">
-                    <h5>Data</h5>
+            </form>
+        </div>
+
+        <div class="form-group" ng-show="asgard && useData.length > 1">
+            <h5>Data</h5>
+            <form class="form-inline">
+                <div class="form-group">
                     <select ng-show="useData.length > 1" class="form-control" ng-model="currentUseData" ng-options="name as name for name in useData"></select>
                     <button ng-show="useData.length > 1 && currentUseData !== message.USE_DATA" type="button" class="btn btn-danger" ng-click="removeData()">移除</button>
                 </div>
-           </form>
+            </form>
         </div>
-    </div>
-</nav>
+</div>
 
-<div class="container">
+<div class="right-stock">
     <div id="svg">
 
     </div>

@@ -38,11 +38,7 @@ angular.module('asgard', [])
         $scope.currentInterval = '1D';
         $scope.currentSymbol = 'sh000001';
         $scope.asgard = false;
-
-        $scope.chartsType = [
-            'line','area'
-        ]
-
+        
 
         $scope.currentShowContainer = $scope.messages.SHOW_CONTAINER;
         $scope.currentHideContainer = $scope.messages.HIDE_CONTAINER;
@@ -58,8 +54,6 @@ angular.module('asgard', [])
         $scope.useCharts = [];
 
         var updateNames = function(){
-
-            console.log($scope.asgard);
 
             $scope.currentShowContainer = $scope.messages.SHOW_CONTAINER;
             $scope.currentHideContainer = $scope.messages.HIDE_CONTAINER;
