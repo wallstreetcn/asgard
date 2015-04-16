@@ -2,7 +2,8 @@ var gulp = require('gulp'),
     tsc = require('gulp-tsc'),
     less = require('gulp-less'),
     livereload = require('gulp-livereload'),
-    plumber = require('gulp-plumber');
+    plumber = require('gulp-plumber'),
+    typedoc = require("gulp-typedoc");;
 
 gulp.task('build', function () {
 
@@ -22,6 +23,15 @@ gulp.task('build', function () {
         }))
         .pipe(gulp.dest('./dist'))
         .pipe(livereload());
+
+    // typedoc
+    gulp.src(["src/*.ts"])
+        .pipe(plumber())
+        .pipe(typedoc({
+            out: "./docs",
+            name: "Asgard"
+        }))
+        .pipe(livereload());;
 
 });
 

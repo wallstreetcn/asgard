@@ -2,4 +2,5 @@ bower_components
 node_modules
 gulp-tsc-tmp-*
 .idea
+docs
 dist

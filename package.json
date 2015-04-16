@@ -10,6 +10,7 @@
     "gulp-less": "^3.0.2",
     "gulp-livereload": "^3.8.0",
     "gulp-plumber": "^1.0.0",
-    "gulp-tsc": "^0.9.4"
+    "gulp-tsc": "^0.9.4",
+    "gulp-typedoc": "^1.1.0"
   }
 }
