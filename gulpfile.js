@@ -29,8 +29,7 @@ gulp.task('build', function () {
         .pipe(plumber())
         .pipe(typedoc({
             out: "./docs",
-            name: "Asgard",
-            theme:'minimal'
+            name: "Asgard"
         }))
         .pipe(livereload());
 

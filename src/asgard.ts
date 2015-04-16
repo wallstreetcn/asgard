@@ -1,4 +1,6 @@
 /// <reference path="../typings/d3/d3.d.ts" />
+
+// @todo:A股3点以后停盘，黄金是24小时，如果2个做比较(已黄金为默认数据，A股为比较数据)，A股3点以后的数据要显示
 module Asgard {
 
 
@@ -218,6 +220,7 @@ module Asgard {
             _defaultDataName:string;
             _originData:{[name:string]:Object[]} = {};
             _data:{[name:string]:DataInterface[]} = {};
+            _xDomainClosePrice:number;
 
             /**
              * Constructor
@@ -226,6 +229,69 @@ module Asgard {
              */
             constructor(stock:Stock) {
                 this._stock = stock;
+            }
+
+            /**
+             * 是否是涨幅模式
+             * @returns {boolean}
+             */
+            isGains():boolean {
+                return this.getDataCount() > 1;
+            }
+
+            setXDomainClosePrice(xDomainClosePrice:number):DataContainer {
+                this._xDomainClosePrice = xDomainClosePrice;
+                return this;
+            }
+
+            getStock():Stock {
+                return this._stock;
+            }
+
+            setStock(stock:Stock):DataContainer {
+                this._stock = stock;
+                return this;
+            }
+
+            /**
+             * 获取可视范围内的默认数据的收盘价,如果未设置过，则计算一次
+             *
+             * @returns {number}
+             */
+            getXDomainClosePrice():number {
+                if (!this._xDomainClosePrice) {
+                    var defaultData = this._stock.getDataContainer().getDataByXDomain()[this.getDefaultDataName()];
+                    this._xDomainClosePrice = defaultData[defaultData.length - 1].close;
+                }
+                return this._xDomainClosePrice;
+            }
+
+
+            /**
+             * 计算yScale值，会判断是否是涨幅模式
+             *
+             * @param price
+             * @returns {any}
+             */
+            calculateYScaleValue(price:number):number {
+                var yScale = this.getStock().getYScale();
+                return yScale(this.isGains() ? this.calculateGains(price) : price);
+            }
+
+
+            /**
+             * 计算涨幅
+             */
+            calculateGains(price:number):number {
+                return (price - this.getXDomainClosePrice()) / this.getXDomainClosePrice();
+            }
+
+            /**
+             * 获取数据
+             * @returns {number}
+             */
+            getDataCount():number {
+                return this.getDataNames().length;
             }
 
             /**
@@ -429,7 +495,7 @@ module Asgard {
              *
              * @param price
              */
-            _disposeMinAndMaxPrice(price:number[]):number[]{
+            _disposeMinAndMaxPrice(price:number[]):number[] {
 
                 var min = price[0],
                     max = price[1],
@@ -453,18 +519,44 @@ module Asgard {
              */
             getYdomain():number[] {
 
-                var xDomain = this._stock.getXScale().domain(),
-                    data = this._stock.getDataContainer().getDataByDateRange(xDomain[0], xDomain[1]);
+                var data = this._stock.getDataContainer().getDataByXDomain();
 
-                if (this._stock.isZoom()) {
+                // 计算最高和最低
+                var minAndMaxPrice = this.getMinAndMaxPrice(data);
 
-                    for (var name in data) {
-                        data[name] = Array.prototype.slice.apply(data[name], [0, this.getShowCount()]);
+                // 数据数量存在1个以上
+                if (this.getDataCount() > 1) {
+
+                    // @todo:2种情况，1种价钱差不多，1种差太多
+
+                    // 获取可视区的收盘价
+                    var defaultData = data[this.getDefaultDataName()];
+
+                    // 先设置一下closePrice,缓存着，后期渲染时在用
+                    this.setXDomainClosePrice(defaultData[defaultData.length - 1].close);
+
+                    // 计算最高涨幅和最低涨幅
+                    var minGains = this.calculateGains(minAndMaxPrice[0]),
+                        maxGains = this.calculateGains(minAndMaxPrice[1]),
+                        start,
+                        end;
+
+                    if (minGains < 0 && maxGains < 0) { // 2种都跌
+                        start = 0;
+                        end = minGains;
+                    } else if (minGains > 0 && maxGains > 0) { // 2种都涨
+                        start = 0;
+                        end = maxGains;
+                    } else {
+                        start = minGains;
+                        end = maxGains;
                     }
+
+                    return [start, end];
 
                 }
 
-                return this.getMinAndMaxPrice(data);
+                return minAndMaxPrice;
 
             }
 
@@ -545,24 +637,25 @@ module Asgard {
 
 
             /**
-             * 获取一个时间范围内的所有数据
+             * 获取XDomain时间范围内的所有数据
              *
              * 如果有多个数据，不同数据要区分
              *
-             * @param gtValue
-             * @param ltValue
              * @returns {{}}
              */
-            getDataByDateRange(gtValue:any, ltValue:any):Object {
+            getDataByXDomain():Object {
 
-                var data = {}, emptyCount = 0, dataCount = 0;
+                var data = {},
+                    emptyCount = 0,
+                    dataCount = 0,
+                    xDomain = this.getStock().getXScale().domain();
 
                 for (var name in this._data) {
 
                     data[name] = [];
 
                     this._data[name].forEach((d:DataInterface):void=> {
-                        if (d.start >= gtValue && d.start <= ltValue) {
+                        if (d.start >= xDomain[0] && d.start <= xDomain[1]) {
                             data[name].push(d);
                         }
                     });
@@ -577,27 +670,33 @@ module Asgard {
 
                 // 所有数据都为空,则不判断范围返回所有数据
                 if (emptyCount === dataCount) {
-                    return this._data;
+                    data = this._data;
                 }
 
+
+                // 如果是缩放，则考虑显示的数据
+                if (this._stock.isZoom()) {
+
+                    for (var name in data) {
+                        data[name] = Array.prototype.slice.apply(data[name], [0, this.getShowCount()]);
+                    }
+
+                }
 
                 return data;
             }
 
 
             /**
-             * 获取数据内的最高和最低价格
-             *
-             * @todo:如果数据有多个，需要使用百分比计算
+             * 获取不同数据的最高和最低价格
              *
              * @param data
-             * @returns {any[]}
+             * @returns {number[]}
              */
             getMinAndMaxPrice(data:Object):number[] {
 
                 var allData = [], min, max;
 
-                // @todo:这里不应该合并多个数据
                 for (var key in data) {
                     allData = allData.concat(data[key]);
                 }
@@ -610,14 +709,7 @@ module Asgard {
                     return d.high;
                 });
 
-                // 去掉该功能，考虑到最高价和最低价可能差太多而显示不正常
-                // 为了组件currentPriceLine考虑，最低价不能高于当前价格，最高价也不能低于当前价格
-                // var currentPrice = this.getCurrentPrice();
-                // min = Math.min(min,currentPrice);
-                // max = Math.max(max,currentPrice);
-
                 return this._disposeMinAndMaxPrice([min, max]);
-
 
             }
 
@@ -732,6 +824,11 @@ module Asgard {
                     .outerTickSize(0)
                     .tickPadding(10)
                     .ticks(6);
+
+
+                if (this._orient === 'right') {
+                    this._d3Axis.ticks(20);
+                }
 
 
                 var key, values;
@@ -1168,7 +1265,7 @@ module Asgard {
                 var prevDate,
                     prevPrice,
                     xScale = this._stock.getXScale(),
-                    yScale = this._stock.getYScale();
+                    dataContainer = this.getStock().getDataContainer();
 
                 if (!prevData) {
                     prevDate = new Date(currentData.start);
@@ -1180,10 +1277,10 @@ module Asgard {
 
                 return [{
                     x: xScale(new Date(currentData.start)),
-                    y: yScale(currentData[this._priceSource])
+                    y: dataContainer.calculateYScaleValue(currentData[this._priceSource])
                 }, {
                     x: xScale(prevDate),
-                    y: yScale(prevPrice)
+                    y: dataContainer.calculateYScaleValue(prevPrice)
                 }];
             }
 
@@ -1236,7 +1333,7 @@ module Asgard {
 
         }
 
-        export class Ohlc extends BaseChart {
+        class Ohlc extends BaseChart {
 
             _rectWidth:number;
 
@@ -1333,18 +1430,23 @@ module Asgard {
 
                 var xScale = this._stock.getXScale(),
                     yScale = this._stock.getYScale(),
-                    RectWidth = this.getZoomRectWidth();
+                    RectWidth = this.getZoomRectWidth(),
+                    dataContainer = this._stock.getDataContainer();
 
                 selection
                     .attr('x', (d:StockData.DataInterface):number => {
                         return xScale(new Date(d.start)) - RectWidth / 2;
                     })
                     .attr('y', (d:StockData.DataInterface):number => {
-                        return this._isUp(d) ? yScale(d.close) : yScale(d.open);
+                        return this._isUp(d) ? dataContainer.calculateYScaleValue(d.close) : dataContainer.calculateYScaleValue(d.open);
                     })
                     .attr('width', RectWidth)
                     .attr('height', ((d:StockData.DataInterface):number => {
-                        var height = this._isUp(d) ? yScale(d.open) - yScale(d.close) : yScale(d.close) - yScale(d.open);
+
+                        var open = dataContainer.calculateYScaleValue(d.open),
+                            close = dataContainer.calculateYScaleValue(d.close);
+
+                        var height = this._isUp(d) ? open - close : close - open;
 
                         return Math.max(height, 1);
                     }))
@@ -1372,19 +1474,20 @@ module Asgard {
                         .y((d:{x:number;y:number}) => {
                             return d.y;
                         }),
-                    xScale = this._stock.getXScale(),
-                    yScale = this._stock.getYScale();
+                    stock = this._stock,
+                    xScale = stock.getXScale(),
+                    dataContainer = stock.getDataContainer();
 
 
                 return (d:StockData.DataInterface):any => {
                     return d3Line([
                         {
                             x: xScale(new Date(d.start)),
-                            y: yScale(d.high)
+                            y: dataContainer.calculateYScaleValue(d.high)
                         },
                         {
                             x: xScale(new Date(d.start)),
-                            y: yScale(d.low)
+                            y: dataContainer.calculateYScaleValue(d.low)
                         }
                     ]);
                 };
@@ -1428,18 +1531,18 @@ module Asgard {
                             return d.y;
                         }),
                     xScale = this._stock.getXScale(),
-                    yScale = this._stock.getYScale();
+                    dataContainer = this.getStock().getDataContainer();
 
 
                 return (d:StockData.DataInterface):any => {
                     return d3Line([
                         {
                             x: xScale(new Date(d.start)),
-                            y: yScale(Math.min(d.close, d.open))
+                            y: dataContainer.calculateYScaleValue(Math.min(d.close, d.open))
                         },
                         {
                             x: xScale(new Date(d.start)),
-                            y: yScale(d.low)
+                            y: dataContainer.calculateYScaleValue(d.low)
                         }
                     ]);
                 };
@@ -1454,18 +1557,18 @@ module Asgard {
                             return d.y;
                         }),
                     xScale = this._stock.getXScale(),
-                    yScale = this._stock.getYScale();
+                    dataContainer = this.getStock().getDataContainer();
 
 
                 return (d:StockData.DataInterface):any => {
                     return d3Line([
                         {
                             x: xScale(new Date(d.start)),
-                            y: yScale(d.high)
+                            y: dataContainer.calculateYScaleValue(d.high)
                         },
                         {
                             x: xScale(new Date(d.start)),
-                            y: yScale(Math.max(d.close, d.open))
+                            y: dataContainer.calculateYScaleValue(Math.max(d.close, d.open))
                         }
                     ]);
                 };
@@ -1509,6 +1612,9 @@ module Asgard {
             }
         }
 
+        /**
+         * @todo : bars 不完美
+         */
         export class Bars extends Ohlc {
 
             _drawCloseRect():ChartInterface {
@@ -1534,7 +1640,7 @@ module Asgard {
                 }
 
                 var xScale = this._stock.getXScale(),
-                    yScale = this._stock.getYScale(),
+                    dataContainer = this.getStock().getDataContainer(),
                     RectWidth = this.getZoomRectWidth();
 
                 selection
@@ -1556,9 +1662,9 @@ module Asgard {
                         var y;
 
                         if (this._isUp(d)) {
-                            y = yScale(d.open);
+                            y = dataContainer.calculateYScaleValue(d.open);
                         } else {
-                            y = yScale(d.close);
+                            y = dataContainer.calculateYScaleValue(d.close);
                         }
 
 
@@ -1600,7 +1706,7 @@ module Asgard {
                 }
 
                 var xScale = this._stock.getXScale(),
-                    yScale = this._stock.getYScale(),
+                    dataContainer = this.getStock().getDataContainer(),
                     RectWidth = this.getZoomRectWidth();
 
                 selection
@@ -1621,9 +1727,9 @@ module Asgard {
                         var y;
 
                         if (this._isDown(d)) {
-                            y = yScale(d.open);
+                            y = dataContainer.calculateYScaleValue(d.open);
                         } else {
-                            y = yScale(d.close);
+                            y = dataContainer.calculateYScaleValue(d.close);
                         }
 
 
@@ -1663,7 +1769,7 @@ module Asgard {
                 }
 
                 var xScale = this._stock.getXScale(),
-                    yScale = this._stock.getYScale(),
+                    dataContainer = this.getStock().getDataContainer(),
                     RectWidth = this.getZoomRectWidth();
 
                 selection
@@ -1671,11 +1777,11 @@ module Asgard {
                         return xScale(new Date(d.start)) - RectWidth / 2;
                     })
                     .attr('y', (d:StockData.DataInterface):number => {
-                        return yScale(d.high);
+                        return dataContainer.calculateYScaleValue(d.high);
                     })
                     .attr('width', RectWidth)
                     .attr('height', ((d:StockData.DataInterface):number => {
-                        var height = yScale(d.low) - yScale(d.high);
+                        var height = dataContainer.calculateYScaleValue(d.low) - dataContainer.calculateYScaleValue(d.high);
                         return Math.max(height, 1);
                     }))
                     .classed(className, true)
@@ -2326,6 +2432,10 @@ module Asgard {
 
         getComponent(name:string):StockComponent.ComponentInterface {
             return this._components[name];
+        }
+
+        getChart(name:string):StockChart.ChartInterface {
+            return this._charts[name];
         }
     }
 
