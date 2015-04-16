@@ -24,14 +24,15 @@ gulp.task('build', function () {
         .pipe(gulp.dest('./dist'))
         .pipe(livereload());
 
-    // typedoc
+    // typedocs
     gulp.src(["src/*.ts"])
         .pipe(plumber())
         .pipe(typedoc({
             out: "./docs",
-            name: "Asgard"
+            name: "Asgard",
+            theme:'minimal'
         }))
-        .pipe(livereload());;
+        .pipe(livereload());
 
 });
 

@@ -1,6 +1,4 @@
 /// <reference path="../typings/d3/d3.d.ts" />
-
-
 module Asgard {
 
 
@@ -20,7 +18,8 @@ module Asgard {
     /**
      * @type {function}
      */
-     var nullFunction = ():void=> {};
+    var nullFunction = ():void=> {
+    };
 
 
     /**
@@ -28,26 +27,22 @@ module Asgard {
      *
      * @type {{}}
      */
-     var listenerContainer = {};
+    var listenerContainer = {};
 
     /**
-     * 扩展d3事件
-     *
+     * 扩展d3添加事件
      *
      * d3.on(type,listener) 只支持绑定一个listener
      * @param type
      * @param listener
      */
-    d3.selection.prototype.addEventListener = function (type, listener) {
+    d3.selection.prototype.addEventListener = function (type:string, listener:Function):void {
 
         var listenerFunction = function (e) {
-
-            e = e || window.event;
-
-            d3.event = e;
+            d3.event = e || window.event;
 
             listener.call(this);
-        }
+        };
 
         if (!listenerContainer[type]) {
             listenerContainer[type] = [];
@@ -59,9 +54,17 @@ module Asgard {
         });
 
         this.node().addEventListener(type, listenerFunction);
+
     }
 
-    d3.selection.prototype.removeEventListener = function (type, listener) {
+    /**
+     * 扩展d3移除事件
+     *
+     * d3.on(type,null) 只支持移除所有listener
+     * @param type
+     * @param listener
+     */
+    d3.selection.prototype.removeEventListener = function (type:string, listener:Function):void {
 
         var typeListeners = listenerContainer[type];
 
@@ -75,6 +78,7 @@ module Asgard {
         }
 
     }
+
 
     /**
      * Stock Margin Options 接口
@@ -140,7 +144,8 @@ module Asgard {
 
 
         /**
-         * hump to
+         * 将驼峰字符串oneTwoThree转换为one-two-three
+         *
          * @param str
          * @returns {string}
          */
@@ -150,7 +155,8 @@ module Asgard {
 
 
         /**
-         * 生成className
+         * 为元素生成className
+         *
          * @param object
          * @param suffix
          * @returns {string}
@@ -244,7 +250,11 @@ module Asgard {
                 });
             }
 
-
+            /**
+             * 数据变化
+             *
+             * @returns {Asgard.StockData.DataContainer}
+             */
             dataChange():DataContainer {
 
                 var stock = this._stock,
@@ -400,7 +410,6 @@ module Asgard {
              *
              * @param date
              * @returns {Date[]}
-             * @private
              */
             _disposeMinAndMaxDate(date:Date[]):Date[] {
 
@@ -419,9 +428,8 @@ module Asgard {
              * 为了让数据显示不超出y可视范围，对最小和最大价格进行合适的修改
              *
              * @param price
-             * @private
              */
-            _disposeMinAndMaxPrice(price:number[]):number[] {
+            _disposeMinAndMaxPrice(price:number[]):number[]{
 
                 var min = price[0],
                     max = price[1],
@@ -455,7 +463,6 @@ module Asgard {
                     }
 
                 }
-
 
                 return this.getMinAndMaxPrice(data);
 
@@ -619,7 +626,7 @@ module Asgard {
              *
              * @returns {string[]}
              */
-            getDataNames():string[]{
+            getDataNames():string[] {
                 return d3.keys(this._data);
             }
 
@@ -632,6 +639,9 @@ module Asgard {
      */
     export module StockComponent {
 
+        /**
+         *  Component 接口
+         */
         export interface ComponentInterface {
             _name:string;
             _stock:Stock;
@@ -643,7 +653,7 @@ module Asgard {
             getStock():Stock;
         }
 
-        export class BaseComponent implements ComponentInterface {
+        class BaseComponent implements ComponentInterface {
 
             _name:string;
             _stock:Stock;
@@ -1689,26 +1699,26 @@ module Asgard {
     // stock start
     export class Stock {
 
-        private _width:number;
-        private _height:number;
-        private _margin:StockMarginOptionsInterface = {left: 50, top: 50, bottom: 50, right: 75};
-        private _interval:string = '1D';
-        private _xScale:any;
-        private _yScale:any;
-        private _containers:Object = {};
-        private _components:Object = {};
-        private _charts:Object = {};
-        private _dataContainer;
-        private _isZoom:boolean;
-        private _zoom:D3.Behavior.Zoom;
-        private _sync:Stock[] = [];
-        private _hiddenClass:string = name + '-hide';
-        private _visibilityClass:string = name + '-visibility-hidden';
-        private _debug:boolean = false;
-        private _selection:D3.Selection;
-        private _isResize:boolean = false;
-        private _zoomEvent:() => void = nullFunction;
-        private _resizeEvent:() => void = nullFunction;
+        _width:number;
+        _height:number;
+        _margin:StockMarginOptionsInterface = {left: 50, top: 50, bottom: 50, right: 75};
+        _interval:string = '1D';
+        _xScale:any;
+        _yScale:any;
+        _containers:Object = {};
+        _components:Object = {};
+        _charts:Object = {};
+        _dataContainer;
+        _isZoom:boolean;
+        _zoom:D3.Behavior.Zoom;
+        _sync:Stock[] = [];
+        _hiddenClass:string = name + '-hide';
+        _visibilityClass:string = name + '-visibility-hidden';
+        _debug:boolean = false;
+        _selection:D3.Selection;
+        _isResize:boolean = false;
+        _zoomEvent:() => void = nullFunction;
+        _resizeEvent:() => void = nullFunction;
 
         constructor(selection:any, options:any) {
 
@@ -1722,22 +1732,22 @@ module Asgard {
             this.setHeight(options.height);
 
             options.isResize && (this._isResize = options.isResize);
-            options.resizeEvent && Util.isFunction(options.resizeEvent) && (this._resizeEvent = options.resizeEvent);
+            Util.isFunction(options.resizeEvent) && (this._resizeEvent = options.resizeEvent);
             options.isZoom && (this._isZoom = options.isZoom);
-            options.zoomEvent && Util.isFunction(options.zoomEvent) && (this._zoomEvent = options.zoomEvent)
+            Util.isFunction(options.zoomEvent) && (this._zoomEvent = options.zoomEvent)
 
             // 使用setInterval,可以对zoom进行一些设置
             options.interval && (this.setInterval(options.interval));
 
             this._initContainer();
             this._initScale();
+
             this._isZoom && this._initZoom();
             this._isResize && this._initResize();
 
             Util.isArray(options.components) && options.components.forEach((component) => this.addComponent(component));
             Util.isArray(options.charts) && options.charts.forEach((chart) => this.addChart(chart));
             Util.isArray(options.data) && options.data.forEach((data) => this.addData(data));
-
 
         }
 
@@ -1749,7 +1759,7 @@ module Asgard {
          * @returns {any}
          * @private
          */
-        private _convertSelection(selection:any):D3.Selection {
+        _convertSelection(selection:any):D3.Selection {
             return selection instanceof d3.selection ? selection : d3.select(selection);
         }
 
@@ -1761,9 +1771,8 @@ module Asgard {
          * @todo : 有个bug,如果大幅度drag到svg外部，zoom事件就无法阻止，应该是d3的问题
          *
          * @returns {Asgard.Stock}
-         * @private
          */
-        private _zoomDragLimit():Stock {
+        _zoomDragLimit():Stock {
 
             var baseSvg = this.getContainer('baseSvg'),
                 stock = this,
@@ -1811,7 +1820,7 @@ module Asgard {
             return this;
         }
 
-        private _initZoom():Stock {
+        _initZoom():Stock {
 
             this._zoom = d3.behavior.zoom();
 
@@ -1846,14 +1855,12 @@ module Asgard {
 
                 this.draw();
 
-
             });
-
 
             return this;
         }
 
-        private _initContainer():Stock {
+        _initContainer():Stock {
 
             var baseSvgContainer = this.getContainer('baseSvg'),
                 dataContainer = this.getContainer('data'),
@@ -1902,7 +1909,7 @@ module Asgard {
             return this;
         }
 
-        private _initScale():Stock {
+        _initScale():Stock {
 
             if (!this._xScale) {
                 this._xScale = d3.time.scale();
@@ -2025,7 +2032,6 @@ module Asgard {
             return this._containers;
         }
 
-
         setWidth(width:number):Stock {
             this._width = (width || (this.getSelection().node().clientWidth || document.documentElement.clientWidth)) - this._margin.left - this._margin.right;
             return this;
@@ -2057,16 +2063,18 @@ module Asgard {
 
             this._interval = interval;
 
-            var scaleExtend;
 
-            switch (this._interval) {
-                case '1':
-                    scaleExtend = [1, 3];
-                    break;
+            if (this.isZoom()) {
+                var scaleExtend;
+
+                switch (this._interval) {
+                    case '1':
+                        scaleExtend = [1, 3];
+                        break;
+                }
+
+                this._zoom.scaleExtent(scaleExtend);
             }
-
-            this._zoom.scaleExtent(scaleExtend);
-
             return this;
         }
 
@@ -2162,7 +2170,6 @@ module Asgard {
             return this;
         }
 
-
         removeContainer(name:string):Stock {
             this._containers[name].remove();
             delete this._containers[name];
@@ -2199,7 +2206,6 @@ module Asgard {
             return this;
         }
 
-
         removeData(name:string):Stock {
 
             // 默认数据肯定不能删除
@@ -2223,7 +2229,6 @@ module Asgard {
 
             return this;
         }
-
 
         /**
          * 移除chart,并且移除非默认的未使用到的数据
@@ -2292,11 +2297,12 @@ module Asgard {
             return this;
         }
 
-        getDataNames():string[]{
+        getDataNames():string[] {
             return this.getDataContainer().getDataNames();
         }
-        getContainerNames():string[]{
-            return d3.keys(this.getContainers()).filter((name:string):boolean=>{
+
+        getContainerNames():string[] {
+            return d3.keys(this.getContainers()).filter((name:string):boolean=> {
                 switch (name) {
                     case 'baseSvg':
                     case 'data':
@@ -2310,15 +2316,15 @@ module Asgard {
             });
         }
 
-        getChartNames():string[]{
+        getChartNames():string[] {
             return d3.keys(this.getCharts());
         }
 
-        getComponentNames():string[]{
+        getComponentNames():string[] {
             return d3.keys(this.getComponents());
         }
 
-        getComponent(name:string):StockComponent.ComponentInterface{
+        getComponent(name:string):StockComponent.ComponentInterface {
             return this._components[name];
         }
     }

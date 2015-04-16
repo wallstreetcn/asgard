@@ -202,7 +202,6 @@ angular.module('asgard', [])
                 }
             });
 
-
             for (var key in components) {
                 name = components[key].name;
                 if ($scope.useComponents.indexOf(name) == -1) {
@@ -225,14 +224,14 @@ angular.module('asgard', [])
                         right: $scope.currentMarginRight
                     },
                     isZoom: true,
-                    zoomEvent:function(e){
-                        console.log('zoom',this,e);
-                    },
+                    //zoomEvent:function(e){
+                    //    console.log('zoom',this,e);
+                    //},
                     debug: true,
                     isResize:true,
-                    resizeEvent:function(e){
-                        console.log('resize',this,e);
-                    },
+                    //resizeEvent:function(e){
+                    //    console.log('resize',this,e);
+                    //},
                     components: $scope.currentComponents
                 });
             }
