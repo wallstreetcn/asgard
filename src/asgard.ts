@@ -611,6 +611,15 @@ module Asgard {
 
             }
 
+            /**
+             * 获取数据的所有names
+             *
+             * @returns {string[]}
+             */
+            getDataNames():string[]{
+                return d3.keys(this._data);
+            }
+
         }
     }
 
@@ -1905,6 +1914,26 @@ module Asgard {
             return this;
         }
 
+        _initResize():Stock {
+
+            var stock = this;
+
+            d3.select(window)['addEventListener']('resize', function () {
+
+                stock.setHeight(stock.getSelection().node().clientHeight);
+                stock.setWidth(stock.getSelection().node().clientWidth);
+                stock._initContainer()._initScale();
+                stock.getDataContainer().dataChange();
+
+                stock._resizeEvent.call(this, d3.event);
+
+                stock.draw();
+            });
+
+            return this;
+
+        }
+
         zoom(callback:() => void):Stock {
             this._zoomEvent = callback;
             return this;
@@ -2260,25 +2289,30 @@ module Asgard {
             return this;
         }
 
-        _initResize():Stock {
-
-            var stock = this;
-
-            d3.select(window)['addEventListener']('resize', function () {
-
-                stock.setHeight(stock.getSelection().node().clientHeight);
-                stock.setWidth(stock.getSelection().node().clientWidth);
-                stock._initContainer()._initScale();
-                stock.getDataContainer().dataChange();
-
-                stock._resizeEvent.call(this, d3.event);
-
-                stock.draw();
+        getDataNames():string[]{
+            return this.getDataContainer().getDataNames();
+        }
+        getContainerNames():string[]{
+            return d3.keys(this.getContainers()).filter((name:string)=>{
+                switch (name) {
+                    case 'baseSvg':
+                    case 'data':
+                    case 'dataClip':
+                    case 'dataClipPath':
+                        return false;
+                        break;
+                    default:
+                        return name;
+                }
             });
+        }
 
-            return this;
+        getChartNames():string[]{
+            return d3.keys(this.getCharts());
+        }
 
-
+        getComponentNames():string[]{
+            return d3.keys(this.getComponents());
         }
 
     }

@@ -184,48 +184,27 @@ angular.module('asgard', [])
             $scope.useData = [$scope.messages.USE_DATA];
             $scope.unusedComponents = [$scope.messages.USE_UNUSED_COMPONENT];
 
-            var useCharts = $scope.asgard.getCharts(),
-                useComponents = $scope.asgard.getComponents(),
-                useContainers = $scope.asgard.getContainers(),
-                useData = $scope.asgard.getDataContainer().getData(),
+            var useContainersNames = $scope.asgard.getContainerNames(),
                 components = $scope.components,
                 name;
 
-            for (name in useData) {
-                $scope.useData.push(name);
-            }
+            $scope.useData = $scope.useData.concat($scope.asgard.getDataNames());
 
-            for (name in useCharts) {
-                $scope.useCharts.push(name);
-            }
+            $scope.useCharts = $scope.useCharts.concat($scope.asgard.getChartNames());
 
-            for (name in useComponents) {
-                $scope.useComponents.push(name);
-            }
+            $scope.useComponents = $scope.useComponents.concat($scope.asgard.getComponentNames());
 
-            for (name in useContainers) {
-
-                switch (name) {
-                    case 'base':
-                    case 'baseSvg':
-                    case 'data':
-                    case 'dataClip':
-                        continue;
-                        break;
-                }
-
+            useContainersNames.forEach(function(name){
                 if ($scope.asgard.containerIsHide(name)) {
                     $scope.hideContainers.push(name);
                 } else {
                     $scope.showContainers.push(name);
                 }
-            }
+            });
 
 
             for (var key in components) {
-
                 name = components[key].name;
-
                 if ($scope.useComponents.indexOf(name) == -1) {
                     $scope.unusedComponents.push(name);
                 }
