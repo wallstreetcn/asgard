@@ -16,6 +16,10 @@ module Asgard {
     export var version:string = '0.0.1';
 
 
+    var nullFunction = ():void=> {
+    };
+
+
     /**
      * 事件容器，删除时候需要用到
      * @type {{}}
@@ -238,7 +242,7 @@ module Asgard {
             }
 
 
-            dataChange():DataContainer{
+            dataChange():DataContainer {
 
                 var stock = this._stock,
                     xScale = stock.getXScale(),
@@ -702,11 +706,10 @@ module Asgard {
                 this.setOrient(options['orient']);
 
                 // set default
-                this._d3Axis.scale(this._getScale(this._orient))
-                    .innerTickSize(0)
+                this._d3Axis.scale(this._getScale(this._orient)).innerTickSize(0)
                     .outerTickSize(0)
                     .tickPadding(10)
-                    .ticks(6)
+                    .ticks(6);
 
 
                 var key, values;
@@ -716,6 +719,7 @@ module Asgard {
                         case 'type':
                         case 'name':
                         case 'orient':
+                        case 'scale':
                             break;
                         case 'className':
                             this._stock.getContainer(this._name).classed(values, true);
@@ -754,11 +758,14 @@ module Asgard {
 
             draw():ComponentInterface {
 
+
                 var selection:any = this._stock._containers[this._name].selectAll('g').data([this]);
 
                 if (selection.empty()) {
-                    selection = selection.enter().append('g').attr(this._getTransform(this._orient));
+                    selection = selection.enter().append('g');
                 }
+
+                selection.attr(this._getTransform(this._orient));
 
                 selection.call(this._d3Axis);
 
@@ -807,6 +814,7 @@ module Asgard {
                         break;
 
                 }
+
 
                 return {'transform': 'translate(' + x + ',' + y + ')'};
             }
@@ -895,13 +903,13 @@ module Asgard {
 
             _show(tips:Tips, stock:Stock, data:StockData.DataInterface) {
 
-                var showContainerName = tips.getName() + '-show',
-                    showContainer = stock.getContainer(showContainerName);
-
-                if (!showContainer) {
-                    showContainer = stock.getContainer('baseSvg').append('g');
-                    stock.addContainer(showContainerName, showContainer);
-                }
+                //var showContainerName = tips.getName() + '-show',
+                //    showContainer = stock.getContainer(showContainerName);
+                //
+                //if (!showContainer) {
+                //    showContainer = stock.getContainer('baseSvg').append('g');
+                //    stock.addContainer(showContainerName, showContainer);
+                //}
 
                 // @todo:......
 
@@ -1666,6 +1674,7 @@ module Asgard {
 
     }
 
+    // stock start
     export class Stock {
 
         _width:number;
@@ -1684,30 +1693,40 @@ module Asgard {
         _hiddenClass:string = name + '-hide';
         _visibilityClass:string = name + '-visibility-hidden';
         _debug:boolean = false;
+        _selection:D3.Selection;
+        _isResize:boolean = false;
+        _zoomEvent:() => void = nullFunction;
+        _resizeEvent:() => void = nullFunction;
 
         constructor(selection:any, options:any) {
 
-            selection = this._convertSelection(selection);
+            this._selection = this._convertSelection(selection);
 
             // 重要的options
             options.debug && (this._debug = options.debug);
             options.margin && (this._margin = options.margin);
 
-            this._width = (options.width || (selection.node().clientWidth || document.documentElement.clientWidth)) - this._margin.left - this._margin.right;
-            this._height = (options.height || (selection.node().clientHeight || document.documentElement.clientHeight)) - this._margin.top - this._margin.bottom;
+            this.setWidth(options.width);
+            this.setHeight(options.height);
 
+            options.isResize && (this._isResize = options.isResize);
+            options.resizeEvent && Util.isFunction(options.resizeEvent) && (this._resizeEvent = options.resizeEvent);
             options.isZoom && (this._isZoom = options.isZoom);
+            options.zoomEvent && Util.isFunction(options.zoomEvent) && (this._zoomEvent = options.zoomEvent)
+
             // 使用setInterval,可以对zoom进行一些设置
             options.interval && (this.setInterval(options.interval));
 
-
-            this._initContainer(selection);
+            this._initContainer();
             this._initScale();
             this._isZoom && this._initZoom();
+            this._isResize && this._initResize();
 
             Util.isArray(options.components) && options.components.forEach((component) => this.addComponent(component));
             Util.isArray(options.charts) && options.charts.forEach((chart) => this.addChart(chart));
             Util.isArray(options.data) && options.data.forEach((data) => this.addData(data));
+
+
         }
 
 
@@ -1784,89 +1803,110 @@ module Asgard {
 
             this._zoom = d3.behavior.zoom();
 
-            var baseSvg = this.getContainer('baseSvg');
-
-            baseSvg.call(this._zoom);
+            this.getContainer('baseSvg').call(this._zoom);
 
             this._zoomDragLimit();
-            this.zoom(():void=> {
+
+            // y 不需要缩放
+            this._zoom.x(this._xScale);
+            this._zoom.on('zoom', ()=> {
+
+                // y 不缩放，所以计算当前范围内的最高和最低价格
+                this._yScale.domain(this._dataContainer.getYdomain());
+
+                // 触发自定义事件
+                this._zoomEvent.call(this, d3.event);
+
+                // 对需要同步的Stock 进行xScale,yScale设置
+                this._sync.forEach((stock) => {
+
+                    var xScale = stock.getXScale(),
+                        yScale = stock.getYScale();
+
+                    xScale.domain(this._xScale.domain());
+                    yScale.domain(this._yScale.domain());
+
+                    stock._zoom.x(xScale);
+                    stock._zoom.y(yScale);
+
+                    stock.draw();
+                });
+
+                this.draw();
+
+
             });
+
+
             return this;
         }
 
-        _initContainer(selection:D3.Selection):Stock {
+        _initContainer():Stock {
 
-            var baseSvgContainer,
-                dataContainer,
-                dataClipContainer,
+            var baseSvgContainer = this.getContainer('baseSvg'),
+                dataContainer = this.getContainer('data'),
+                dataClipContainer = this.getContainer('dataClip'),
+                dataClipPathContainer = this.getContainer('dataClipPath'),
                 margin = this.getMargin();
 
-            baseSvgContainer = selection.append('svg').attr({
+            if (!baseSvgContainer) {
+                baseSvgContainer = this.getSelection().append('svg');
+                this.addContainer('baseSvg', baseSvgContainer);
+            }
+
+            baseSvgContainer.attr({
                 width: this.getWidth() + margin.left + margin.right,
                 height: this.getHeight() + margin.top + margin.bottom
             });
 
-            dataContainer = baseSvgContainer.append('g').attr({
+
+            if (!dataContainer) {
+                dataContainer = baseSvgContainer.append('g');
+                this.addContainer('data', dataContainer);
+            }
+
+            dataContainer.attr({
                 transform: 'translate(' + margin.left + ',' + margin.top + ')',
                 width: this.getWidth(),
                 height: this.getHeight()
             });
 
-            dataClipContainer = dataContainer.append('g')
-                .attr('clip-path', 'url(#plotAreaClip)');
 
-            dataClipContainer.append('clipPath')
-                .attr('id', 'plotAreaClip')
-                .append('rect')
-                .attr({
-                    width: this.getWidth(),
-                    height: this.getHeight()
-                });
+            if (!dataClipContainer) {
+                dataClipContainer = dataContainer.append('g').attr('clip-path', 'url(#plotAreaClip)');
+                this.addContainer('dataClip', dataClipContainer);
+            }
 
-            this.addContainer('base', selection)
-                .addContainer('baseSvg', baseSvgContainer)
-                .addContainer('data', dataContainer)
-                .addContainer('dataClip', dataClipContainer);
+            if (!dataClipPathContainer) {
+                dataClipPathContainer = dataClipContainer.append('clipPath').attr('id', 'plotAreaClip').append('rect');
+                this.addContainer('dataClipPath', dataClipPathContainer);
+            }
+
+            dataClipPathContainer.attr({
+                width: this.getWidth(),
+                height: this.getHeight()
+            });
 
             return this;
         }
 
         _initScale():Stock {
-            this._xScale = d3.time.scale().range([0, this._width]);
-            this._yScale = d3.scale.linear().rangeRound([this._height, 0]);
+
+            if (!this._xScale) {
+                this._xScale = d3.time.scale();
+            }
+            this._xScale.range([0, this._width]);
+
+            if (!this._yScale) {
+                this._yScale = d3.scale.linear();
+            }
+            this._yScale.rangeRound([this._height, 0]);
+
             return this;
         }
 
         zoom(callback:() => void):Stock {
-            if (this._isZoom) {
-                // y 不需要缩放
-                this._zoom.x(this._xScale);
-                this._zoom.on('zoom', ()=> {
-
-                    // y 不缩放，所以计算当前范围内的最高和最低价格
-                    this._yScale.domain(this._dataContainer.getYdomain());
-
-                    // 对需要同步的Stock 进行xScale,yScale设置
-                    this._sync.forEach((stock) => {
-
-                        var xScale = stock.getXScale(),
-                            yScale = stock.getYScale();
-
-                        xScale.domain(this._xScale.domain());
-                        yScale.domain(this._yScale.domain());
-
-                        stock._zoom.x(xScale);
-                        stock._zoom.y(yScale);
-
-                        stock.draw();
-                    });
-
-                    this.draw();
-
-                    callback();
-
-                });
-            }
+            this._zoomEvent = callback;
             return this;
         }
 
@@ -1876,7 +1916,6 @@ module Asgard {
         }
 
         draw():Stock {
-
             this.drawComponent();
             this.drawChart();
             return this;
@@ -1956,18 +1995,25 @@ module Asgard {
 
 
         setWidth(width:number):Stock {
-            this._width = width;
+            this._width = (width || (this.getSelection().node().clientWidth || document.documentElement.clientWidth)) - this._margin.left - this._margin.right;
             return this;
         }
 
         getWidth():number {
+
             return this._width;
 
         }
 
         setHeight(height:number):Stock {
-            this._height = height;
+
+            this._height = (height || (this.getSelection().node().clientHeight || document.documentElement.clientHeight)) - this._margin.top - this._margin.bottom;
+
             return this;
+        }
+
+        getSelection():D3.Selection {
+            return this._selection;
         }
 
         getHeight():number {
@@ -2022,12 +2068,22 @@ module Asgard {
             return this._yScale;
         }
 
+        setIsZoom(isZoom:boolean):Stock {
+            this._isZoom = isZoom;
+            this._isZoom && this._initZoom();
+            return this;
+        }
+
         isZoom():boolean {
             return this._isZoom;
         }
 
         getZoom():D3.Behavior.Zoom {
             return this._zoom;
+        }
+
+        getZoomEvent():() => void {
+            return this._zoomEvent;
         }
 
         clearData():Stock {
@@ -2117,8 +2173,8 @@ module Asgard {
             // 默认数据肯定不能删除
             if (this._dataContainer.getDefaultDataName() === name) {
 
-                if(this.isDebug()){
-                    throw new Error('默认数据 '+name+' 无法删除');
+                if (this.isDebug()) {
+                    throw new Error('默认数据 ' + name + ' 无法删除');
                 }
 
                 return this;
@@ -2163,8 +2219,8 @@ module Asgard {
                 // 不存在其他chart,该chart不能删除
                 if (!hasOtherUse) {
 
-                    if(this.isDebug()){
-                        throw new Error('名字为' + name + '的Chart绑定了默认的数据(' + defaultName+ ')，且默认数据没有与其他的Chart绑定，Chart无法删除');
+                    if (this.isDebug()) {
+                        throw new Error('名字为' + name + '的Chart绑定了默认的数据(' + defaultName + ')，且默认数据没有与其他的Chart绑定，Chart无法删除');
                     }
 
                     return this;
@@ -2185,7 +2241,46 @@ module Asgard {
             return this;
         }
 
-    }
+        getResizeEvent():() => void {
+            return this._resizeEvent;
+        }
 
+        isResize():boolean {
+            return this._isResize;
+        }
+
+        setIsResize(resize:boolean):Stock {
+            this._isResize = resize;
+            this._isResize && this._initResize();
+            return this;
+        }
+
+        resize(callback:()=>{}):Stock {
+            this._resizeEvent = callback;
+            return this;
+        }
+
+        _initResize():Stock {
+
+            var stock = this;
+
+            d3.select(window)['addEventListener']('resize', function () {
+
+                stock.setHeight(stock.getSelection().node().clientHeight);
+                stock.setWidth(stock.getSelection().node().clientWidth);
+                stock._initContainer()._initScale();
+                stock.getDataContainer().dataChange();
+
+                stock._resizeEvent.call(this, d3.event);
+
+                stock.draw();
+            });
+
+            return this;
+
+
+        }
+
+    }
 
 }

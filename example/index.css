@@ -6,21 +6,68 @@ body{
     margin:5px 0;
 }
 
+.pl0{
+    padding-left: 0;
+}
+
+.input-group input[type=number]{
+    height: 36px;
+}
+
+
 .left-options{
+    position: absolute;
+    left:0;
+    top:0;
     width: 300px;
-    margin:10px 10px;
-    float: left;
+    padding:10px 15px;
+    bottom:0;
+    overflow: scroll;
+    background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyNpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNS1jMDE0IDc5LjE1MTQ4MSwgMjAxMy8wMy8xMy0xMjowOToxNSAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIChNYWNpbnRvc2gpIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjdBNzI3RkU1REMwQzExRTRBMkQ4QkExRkIxMkNFN0VGIiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjdBNzI3RkU2REMwQzExRTRBMkQ4QkExRkIxMkNFN0VGIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6N0E3MjdGRTNEQzBDMTFFNEEyRDhCQTFGQjEyQ0U3RUYiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6N0E3MjdGRTREQzBDMTFFNEEyRDhCQTFGQjEyQ0U3RUYiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz5OTcAhAAABOElEQVR42kySCY6EMAwEIYTl+gj//xvihq24RqOxBGp37LZjp57nuWmafd/rugZUVXXfN3/cnDM4pcS/bdvjOOAT7Pu+wzAIiPsLA5znCUnQ8zxEQ+JmWHzZO4w6qJJAPi4AecJwSwXyuq4jWu2+7wHXdZED/4uJAWc+ZCyCkhHeARJhorkhR5/iUDiKEbcsC5gD9axfOgmDz8QhUFDcx2NnRQ59k2a+l8xofEf5bdSZEgdPzjiOAHhwMtoEKvD3wKmTRjIYxi7SG1ZQKpgKn3lHqDN16DDlv20bo7S0i8McPy41HZfTKy21YS6FO4C9K3WsibmcJqyUZkplI9GDRUiGdBtkKmdjyWZg0b7CEHZ0GNqSaPvkEhNwza5cGV8OLnVsbF1Xh5ntVY1pmiyotu/y9y3D/AswAHImXYGoYBgNAAAAAElFTkSuQmCC");
+    color:#fff;
 }
 
 .right-stock{
-    margin-left: 330px;
+    z-index: -1;
+    position: absolute;
+    left:30px;
+    right:15px;
+    bottom:15px;
+    top:15px;
 }
 
 .left-options .input-group-addon{
     width: 72px;
 }
 
+.left-options .left-options-close{
+    position: absolute;
+    right: 10px;
+    top:5px;
+    color:#fff;
+    cursor: pointer;
+}
+
 .left-options .error-operate p{
     padding:15px 5px;
     color:#000;
+}
+
+.left-options.close-status{
+    left:-300px;
+}
+
+.left-options-control{
+    position: absolute;
+    z-index: 1000;
+}
+.left-options-control span{
+    background: #08020a;
+}
+
+.left-options-control button{
+    display: block;
+}
+.left-options-control button.close-status{
+    display: none;
 }

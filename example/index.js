@@ -7,6 +7,24 @@ angular.module('asgard', [])
 
     .controller('exampleController', ['$scope', '$http', 'urls', function ($scope, $http, urls) {
 
+        // event
+        var leftOptions = angular.element('.left-options'),
+            leftOptionsControlButton = angular.element('.left-options-control button'),
+            leftOptionsCloseButton = angular.element('.left-options-close');
+
+        leftOptionsCloseButton.on('click',function(){
+            leftOptions.animate({left:-300},function(){
+                leftOptionsControlButton.removeClass('close-status');
+            });
+        });
+
+        leftOptionsControlButton.on('click',function(){
+
+            leftOptionsControlButton.addClass('close-status');
+            leftOptions.animate({left:0});
+
+        });
+
         $scope.messages = {
             SHOW_CONTAINER: '已显示的',
             HIDE_CONTAINER: '已隐藏的',
@@ -148,6 +166,8 @@ angular.module('asgard', [])
 
         var updateNames = function () {
 
+            leftOptionsCloseButton.trigger('click');
+
             $scope.errorMessage = false;
 
             $scope.currentShowContainer = $scope.messages.SHOW_CONTAINER;
@@ -216,7 +236,7 @@ angular.module('asgard', [])
 
         var initAsgard = function () {
             if (!$scope.asgard) {
-                $scope.asgard = new Asgard.Stock('#svg', {
+                $scope.asgard = new Asgard.Stock('.right-stock', {
                     width: $scope.currentWidth,
                     height: $scope.currentHeight,
                     margin: {
@@ -226,7 +246,14 @@ angular.module('asgard', [])
                         right: $scope.currentMarginRight
                     },
                     isZoom: true,
+                    zoomEvent:function(e){
+                        console.log('zoom',this,e);
+                    },
                     debug: true,
+                    isResize:true,
+                    resizeEvent:function(e){
+                        console.log('resize',this,e);
+                    },
                     components: $scope.currentComponents
                 });
             }
@@ -370,6 +397,7 @@ angular.module('asgard', [])
 
                 $scope.asgard.draw();
 
+
                 updateNames();
 
             });
@@ -408,5 +436,6 @@ angular.module('asgard', [])
             });
 
         };
+
 
     }]);

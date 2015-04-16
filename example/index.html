@@ -15,7 +15,20 @@
 </head>
 <body ng-app="asgard">
 
+
+
+<div class="left-options-control">
+    <button class="navbar-toggle collapsed close-status" type="button">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+    </button>
+</div>
+
+
 <div class="left-options" ng-controller="exampleController">
+
         <div class="form-group">
             <form>
                 <div class="form-group">
@@ -31,13 +44,16 @@
                     <select class="form-control" ng-model="currentChart" ng-options="chart for chart in charts"></select>
                 </div>
                 <div class="form-group" ng-show="!asgard">
-                    <label>Width</label>
-                    <input type="number" class="form-control" ng-model="currentWidth">
+                    <div class="form-group col-sm-6 pl0" ng-show="!asgard">
+                        <label>Width</label>
+                        <input type="number" class="form-control" ng-model="currentWidth">
+                    </div>
+                    <div class="form-group col-sm-6 pl0" ng-show="!asgard">
+                        <label>Height</label>
+                        <input type="number" class="form-control" ng-model="currentHeight">
+                    </div>
                 </div>
-                <div class="form-group" ng-show="!asgard">
-                    <label>Height</label>
-                    <input type="number" class="form-control" ng-model="currentHeight">
-                </div>
+
                 <div class="form-group" ng-show="!asgard">
                     <label>Margin</label>
                     <div class="input-group mtb5">
@@ -131,12 +147,11 @@
             <p class="bg-danger">{{errorMessage}}</p>
         </div>
 
+        <button type="button" class="close left-options-close"><span>&times;</span></button>
+
 </div>
 
 <div class="right-stock">
-    <div id="svg">
-
-    </div>
 </div>
 
 
