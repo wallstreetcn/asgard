@@ -2,6 +2,7 @@
 
 // @todo:A股3点以后停盘，黄金是24小时，如果2个做比较(已黄金为默认数据，A股为比较数据)，A股3点以后的数据要显示
 // @todo:优化api,xAxis
+// @todo:tips x y 容器名字
 
 module Asgard {
 
@@ -2143,7 +2144,7 @@ module Asgard {
         }
 
         setWidth(width:number):Stock {
-            this._width = width || this.getSelection().node().clientWidth - this._margin.left - this._margin.right;
+            this._width = (width || this.getSelection().node().clientWidth) - this._margin.left - this._margin.right;
             return this;
         }
 
@@ -2155,7 +2156,7 @@ module Asgard {
 
         setHeight(height:number):Stock {
 
-            this._height = height || this.getSelection().node().clientHeight - this._margin.top - this._margin.bottom;
+            this._height = (height || this.getSelection().node().clientHeight) - this._margin.top - this._margin.bottom;
 
             return this;
         }
@@ -2281,6 +2282,7 @@ module Asgard {
         }
 
         removeContainer(name:string):Stock {
+
             this._containers[name].remove();
             delete this._containers[name];
             return this;
@@ -2309,7 +2311,13 @@ module Asgard {
 
         removeComponent(name:string):Stock {
 
+            if(name === 'tips'){
+                this.removeContainer(name + '-x');
+                this.removeContainer(name + '-y');
+            }
+
             this.removeContainer(name);
+
 
             delete this._components[name];
 

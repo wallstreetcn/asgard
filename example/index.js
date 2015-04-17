@@ -241,7 +241,7 @@ angular.module('asgard', [])
                     callback: 'JSON_CALLBACK',
                     symbol: $scope.currentSymbol,
                     interval: $scope.currentInterval,
-                    rows: 1000
+                    rows: 100
                 }
             };
 
