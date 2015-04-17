@@ -19,10 +19,8 @@ angular.module('asgard', [])
         });
 
         leftOptionsControlButton.on('click',function(){
-
             leftOptionsControlButton.addClass('close-status');
             leftOptions.animate({left:0});
-
         });
 
         $scope.messages = {
@@ -166,7 +164,7 @@ angular.module('asgard', [])
 
         var updateNames = function () {
 
-            leftOptionsCloseButton.trigger('click');
+            //leftOptionsCloseButton.trigger('click');
 
             $scope.errorMessage = false;
 
