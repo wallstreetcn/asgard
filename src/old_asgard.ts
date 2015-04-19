@@ -23,8 +23,7 @@ module Asgard {
     /**
      * @type {function}
      */
-    var nullFunction = ():void=> {
-    };
+    export var nullFunction = ():void=> {};
 
 
     /**
@@ -185,6 +184,7 @@ module Asgard {
             return typeof(obj);
         }
 
+
         /**
          * 首字母大写
          * @param str
@@ -277,6 +277,7 @@ module Asgard {
              * @returns {any}
              */
             calculateYScaleValue(price:number):number {
+
                 var yScale = this.getStock().getYScale();
 
                 return yScale(this.isGains() ? this.calculateGains(price) : price);
@@ -334,7 +335,7 @@ module Asgard {
                 xScale.domain(this.getXdomain());
                 yScale.domain(this.getYdomain());
 
-                stock.isZoom() && stock.getZoom().x(xScale);
+                stock.isZoom() && stock.getZoom().x(stock.getXScale()['zoomable']());
 
                 return this;
             }
@@ -455,19 +456,24 @@ module Asgard {
              *
              * @returns {Date[]}
              */
-            getXdomain():Date[] {
+            getXdomain():any[] {
 
                 var data = this.getDataByName(this._defaultDataName);
 
-                if (this._stock.isZoom()) {
-                    data = Array.prototype.slice.apply(data, [0, this.getShowCount()]);
-                }
+                return data.map((d:DataInterface):Date => {
+                        return new Date(d.start);
+                }).reverse();
 
-                var date:Date[] = d3.extent<Date>(data.map((d:DataInterface):Date => {
-                    return new Date(d.start);
-                }));
 
-                return this._disposeMinAndMaxDate(date);
+                //if (this._stock.isZoom()) {
+                //    data = Array.prototype.slice.apply(data, [0, this.getShowCount()]);
+                //}
+                //
+                //var date:Date[] = d3.extent<Date>(data.map((d:DataInterface):Date => {
+                //    return new Date(d.start);
+                //}));
+                //
+                //return this._disposeMinAndMaxDate(date);
 
             }
 
@@ -561,6 +567,8 @@ module Asgard {
 
                 }
 
+
+
                 return minAndMaxPrice;
 
             }
@@ -592,7 +600,6 @@ module Asgard {
                     i:number,
                     left:number,
                     time = date.getTime();
-
 
                 // 数据是从新到旧,找比当前时间小的时间，找到说明当前时间左边的值找到
                 for (i = 0; i < l; i++) {
@@ -653,7 +660,7 @@ module Asgard {
                 var data = {},
                     emptyCount = 0,
                     dataCount = 0,
-                    xDomain = this.getStock().getXScale().domain();
+                    xDomain = d3.extent(this.getStock().getXScale().domain());
 
                 for (var name in this._data) {
 
@@ -671,7 +678,6 @@ module Asgard {
 
                     dataCount++;
                 }
-
 
                 // 所有数据都为空,则不判断范围返回所有数据
                 if (emptyCount === dataCount) {
@@ -881,7 +887,6 @@ module Asgard {
             }
 
             draw():ComponentInterface {
-
 
                 var selection:any = this._stock.getContainer(this._name).selectAll('g').data([this]);
 
@@ -1103,7 +1108,7 @@ module Asgard {
 
                     var nearData = stock.getDataContainer().getNearDataByDate(date);
 
-                    var nearDataX = stock.getXScale()(nearData.start) + margin.left;
+                    var nearDataX = stock.getXScale()(nearData['start']) + margin.left;
 
                     xLine.attr('x1', 0).attr('y1', y).attr('x2', width).attr('y2', y).classed(visibilityClass, false).attr('transform', 'translate(' + margin.left + ',0)');
                     yLine.attr('x1', nearDataX).attr('y1', 0).attr('x2', nearDataX).attr('y2', height).classed(visibilityClass, false).attr('transform', 'translate(0,' + margin.top + ')');
@@ -1387,85 +1392,150 @@ module Asgard {
 
         export class Candle extends Ohlc {
 
-            _drawHighLowLine():ChartInterface {
 
-                var selection:any = this._stock.getContainer(this._name)
-                    .selectAll('path')
-                    .data(
-                    this._stock.getDataContainer().getDataByName(this._dataName)
-                    , (d:StockData.DataInterface):number => {
-                        return d.start;
-                    }
-                );
 
-                if (selection.empty()) {
-                    selection = selection.enter().append('path');
-                } else {
-                    if (selection.enter().empty()) {
-                        selection.exit().remove();
+            _drawHighLowLine(data):ChartInterface {
+
+                ['up','down','equal'].forEach((key)=>{
+                    var selection:any = this._stock.getContainer(this._name)
+                        .selectAll('path.'+Util.generateClassName(this, 'high-low-line-' + key))
+                        .data(
+                        [data[key]]
+                    );
+
+
+                    if (selection.empty()) {
+                        selection = selection.enter().append('path');
                     } else {
-                        selection.enter().append('path');
+                        if (selection.enter().empty()) {
+                            selection.exit().remove();
+                        } else {
+                            selection.enter().append('path');
+                        }
                     }
-                }
 
-                selection.attr('d', this._highLowline()).classed(Util.generateClassName(this, 'high-low-line'), true);
+
+                    var yScale = this.getStock().getYScale(),
+                        xScale = this.getStock().getXScale();
+
+                    selection.attr('d',function(data) {
+
+                        return data.map(function (d) {
+                            var path = [],
+                                open = yScale(d.open),
+                                close = yScale(d.close),
+                                rangeBand = Math.max(xScale.band(), 1),
+                                xPoint = xScale(d.start),
+                                xValue = xPoint - rangeBand/2;
+
+                            // Top
+                            path.push(
+                                'M', xPoint, yScale(d.high),
+                                'L', xPoint, Math.min(open, close)
+                            );
+
+                            // Draw another cross wick if there is no body
+                            if(open == close) {
+                                path.push(
+                                    'M', xValue, open,
+                                    'l', rangeBand, 0
+                                );
+                            }
+                            // Bottom
+                            path.push(
+                                'M', xPoint, Math.max(open, close),
+                                'L', xPoint, yScale(d.low)
+                            );
+
+                            return path.join(' ');
+                        }).join(' ');
+                    }).classed(Util.generateClassName(this, 'high-low-line-' + key), true);
+                });
+
+
                 return this;
             }
 
-            _drawCandleRect():ChartInterface {
-                var selection:any = this._stock.getContainer(this._name)
-                    .selectAll('rect')
-                    .data(
-                    this._stock.getDataContainer().getDataByName(this._dataName),
-                    (d:StockData.DataInterface):number=> {
-                        return d.start;
-                    }
-                );
+            _drawCandleRect(data):ChartInterface {
 
 
-                if (selection.empty()) {
-                    selection = selection.enter().append('rect');
-                } else {
-                    if (selection.enter().empty()) {
-                        selection.exit().remove();
+                ['up','down','equal'].forEach((key)=>{
+
+                    var selection:any = this._stock.getContainer(this._name)
+                        .selectAll('path.' + Util.generateClassName(this, key))
+                        .data([data[key]]);
+
+                    if (selection.empty()) {
+                        selection = selection.enter().append('path');
                     } else {
-                        selection.enter().append('rect');
+                        if (selection.enter().empty()) {
+                            selection.exit().remove();
+                        } else {
+                            selection.enter().append('path');
+                        }
                     }
-                }
 
-                var xScale = this._stock.getXScale(),
-                    yScale = this._stock.getYScale(),
-                    RectWidth = this.getZoomRectWidth(),
-                    dataContainer = this._stock.getDataContainer();
+                    var yScale = this.getStock().getYScale(),
+                        xScale = this.getStock().getXScale();
 
-                selection
-                    .attr('x', (d:StockData.DataInterface):number => {
-                        return xScale(new Date(d.start)) - RectWidth / 2;
-                    })
-                    .attr('y', (d:StockData.DataInterface):number => {
-                        return this._isUp(d) ? dataContainer.calculateYScaleValue(d.close) : dataContainer.calculateYScaleValue(d.open);
-                    })
-                    .attr('width', RectWidth)
-                    .attr('height', ((d:StockData.DataInterface):number => {
+                    selection.attr('d',function(data) {
+                        console.log(data);
+                        return data.map(function (d) {
+                            var path = [],
+                                open = yScale(d.open),
+                                close = yScale(d.close),
+                                rangeBand = Math.max(xScale.band(), 1),
+                                xValue = xScale(d.start) - rangeBand/2;
 
-                        var open = dataContainer.calculateYScaleValue(d.open),
-                            close = dataContainer.calculateYScaleValue(d.close);
+                            path.push(
+                                'M', xValue, open,
+                                'l', rangeBand, 0
+                            );
 
-                        var height = this._isUp(d) ? open - close : close - open;
+                            // Draw body only if there is a body (there is no stroke, so will not appear anyway)
+                            if(open != close) {
+                                path.push(
+                                    'L', xValue + rangeBand, close,
+                                    'l', -rangeBand, 0,
+                                    'L', xValue, open
+                                );
+                            }
 
-                        return Math.max(height, 1);
-                    }))
-                    .classed(Util.generateClassName(this, 'rect'), true)
-                    .classed(Util.generateClassName(this, 'up'), this._isUp)
-                    .classed(Util.generateClassName(this, 'down'), this._isDown)
-                    .classed(Util.generateClassName(this, 'consolidation'), this._isConsolidation);
+                            return path.join(' ');
+                        }).join(' ')
+                    }).classed(Util.generateClassName(this, key), true);
+
+
+                });
+
+
+
+
                 return this;
             }
 
             draw():ChartInterface {
 
-                this._drawHighLowLine();
-                this._drawCandleRect();
+                function up(d) {
+                    return d.open < d.close;
+                }
+
+                function down(d) {
+                    return d.open > d.close;
+                }
+
+
+                var data = this._stock.getDataContainer().getDataByName(this._dataName);
+
+                data = data.reduce(function(result, d) {
+                    if (up(d)) result.up.push(d);
+                    else if (down(d)) result.down.push(d);
+                    else result.equal.push(d);
+                    return result;
+                }, { up: [], down: [], equal: [] });
+
+               this._drawCandleRect(data);
+                this._drawHighLowLine(data);
 
                 return this;
 
@@ -1610,7 +1680,7 @@ module Asgard {
 
                 this._drawHighLine();
                 this._drawLowLine();
-                this._drawCandleRect();
+                //this._drawCandleRect();
 
                 return this;
 
@@ -1814,12 +1884,15 @@ module Asgard {
         _height:number;
         _margin:StockMarginOptionsInterface = {left: 50, top: 50, bottom: 50, right: 75};
         _interval:string = '1D';
+
         _xScale:any;
         _yScale:any;
+
         _containers:Object = {};
         _components:Object = {};
         _charts:Object = {};
         _dataContainer;
+
         _isZoom:boolean;
         _zoom:D3.Behavior.Zoom;
         _sync:Stock[] = [];
@@ -1828,8 +1901,8 @@ module Asgard {
         _debug:boolean = false;
         _selection:D3.Selection;
         _isResize:boolean = false;
-        _zoomEvent:() => void = nullFunction;
-        _resizeEvent:() => void = nullFunction;
+        _zoomEvent:() => void = function(){};
+        _resizeEvent:() => void = function(){};
 
         constructor(selection:any, options:any) {
 
@@ -1937,10 +2010,12 @@ module Asgard {
 
             this.getContainer('baseSvg').call(this._zoom);
 
-            this._zoomDragLimit();
+           // this._zoomDragLimit();
 
             // y 不需要缩放
-            this._zoom.x(this._xScale);
+
+            this._zoom.x(this._xScale['zoomable']());
+
             this._zoom.on('zoom', ()=> {
 
                 // y 不缩放，所以计算当前范围内的最高和最低价格
@@ -2022,15 +2097,18 @@ module Asgard {
 
         _initScale():Stock {
 
+
             if (!this._xScale) {
-                this._xScale = d3.time.scale();
+                this._xScale = window['financetDate']();
             }
+
+
             this._xScale.range([0, this._width]);
 
             if (!this._yScale) {
                 this._yScale = d3.scale.linear();
             }
-            this._yScale.rangeRound([this._height, 0]);
+            this._yScale.range([this._height, 0]);
 
             return this;
         }

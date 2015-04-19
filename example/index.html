@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
 
     <script src="../bower_components/d3/d3.js"></script>
+    <script src="./d3.plugins.js"></script>
     <script src="../bower_components/jquery/dist/jquery.min.js"></script>
     <script src="../bower_components/angularjs/angular.min.js"></script>
     <script src="../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
@@ -12,6 +13,7 @@
     <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="../dist/css/theme/default.css"/>
     <link rel="stylesheet" href="index.css"/>
+
 </head>
 <body ng-app="asgard">
 
@@ -154,6 +156,49 @@
 <div class="right-stock">
 </div>
 
+
+
+
+<script>
+
+
+    $.get('http://api.markets.wallstreetcn.com:80/v1/chart.json?interval=1D&symbol=XAUUSD&rows=200',function(data){
+
+        data = data.results;
+
+        var asgard = new Asgard.StockChart('.right-stock',{
+            data:[
+                {
+                    id:'XAUUSD-data-chart',
+                    data:data,
+                    type:'chart'
+                }
+            ],
+            components:[
+                {
+                    id:'bottom-axis',
+                    type:'axis',
+                    orient:'bottom'
+                },
+                {
+                    id:'right-axis',
+                    type:'axis',
+                    orient:'right'
+                }
+            ],
+            charts:[
+                {
+                    id:'XAUUSD-candle',
+                    type:'HollowCandle',
+                    chartDataId:'XAUUSD-data-chart'
+                }
+            ]
+        });
+
+        asgard.draw();
+    },'jsonp')
+
+</script>
 
 
 </body>
