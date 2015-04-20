@@ -32,10 +32,15 @@ gulp.task('build', function () {
         'Stock/Components/Interface',
         'Stock/Components/Base',
         'Stock/Components/Axis',
+        'Stock/Components/Tips',
         'Stock/Charts/Interface',
         'Stock/Charts/Base',
+        'Stock/Charts/Ohlc',
         'Stock/Charts/Candle',
-        'Stock/Charts/HollowCandle'
+        'Stock/Charts/HollowCandle',
+        'Stock/Charts/Line',
+        'Stock/Charts/Area',
+        'Stock/Charts/Volume'
     ];
 
     var buildList = [];

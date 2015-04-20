@@ -8,4 +8,10 @@ module Asgard.Stock.Charts {
         draw():ChartInterface;
     }
 
+    export interface OhlcChartDataInterface{
+        up:Data.ChartDataInterface[];
+        down:Data.ChartDataInterface[];
+        equal:Data.ChartDataInterface[];
+    }
+
 }

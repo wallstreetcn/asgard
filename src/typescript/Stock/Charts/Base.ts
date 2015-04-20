@@ -8,6 +8,10 @@ module Asgard.Stock.Charts {
         protected containerPosition:string = ':first-child';
         protected chartDataId:string;
 
+        barWidth():number{
+            return Math.max(this.getStockChart().getXScale().band(),1);
+        }
+
         setChartDataId(chartDataId:string):ChartInterface {
             this.chartDataId = chartDataId;
             return this;
@@ -61,6 +65,25 @@ module Asgard.Stock.Charts {
             this.setId(options.id);
             this.setChartDataId(options.chartDataId);
             return this;
+        }
+
+        protected initSelection(data:Data.ChartDataInterface[], className):D3.Selection {
+
+            var selection:any = this.getContainer()
+                .selectAll('path.' + className)
+                .data([data]);
+
+            if (selection.empty()) {
+                selection = selection.enter().append('path');
+            } else {
+                if (selection.enter().empty()) {
+                    selection.exit().remove();
+                } else {
+                    selection.enter().append('path');
+                }
+            }
+
+            return selection;
         }
 
         protected initContainer():ChartInterface {

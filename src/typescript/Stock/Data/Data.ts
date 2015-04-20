@@ -8,6 +8,7 @@ module Asgard.Stock.Data {
         open:number;
         close:number;
         price:number;
+        volume:number;
     }
 
     export interface ChartDataObjectInterface {
@@ -77,7 +78,7 @@ module Asgard.Stock.Data {
                     open: d['open'],
                     close: d['close'],
                     price: d['price'],
-                    volume: d['price']
+                    volume: d['volume']
                 }
             });
         }
@@ -95,9 +96,6 @@ module Asgard.Stock.Data {
 
             xScale.domain(this.getXdomain());
             yScale.domain(this.getYdomain());
-
-            // @todo : zoom init zoomable
-            //stock.isZoom() && stock.getZoom().x(stock.getXScale()['zoomable']());
 
             return this;
         }
@@ -132,8 +130,6 @@ module Asgard.Stock.Data {
                 data = chartData;
             }
 
-            // @todo : 如果是缩放，则考虑显示的数据
-
             return data;
         }
 
@@ -147,6 +143,9 @@ module Asgard.Stock.Data {
             }).reverse();
         }
 
+        getDefaultChartData():ChartDataInterface[]{
+            return this.getChartDataById(this.getDefaultId());
+        }
         getChartData():ChartDataObjectInterface {
             return this.chartData;
         }
@@ -212,16 +211,17 @@ module Asgard.Stock.Data {
             // 计算最高和最低
             var minAndMaxPrice = this.getMinAndMaxPrice(viewableChartData);
 
+            // 获取可视区的收盘价
+            var defaultData = viewableChartData[this.getDefaultId()];
+
+            // 先设置一下可视区closePrice,缓存着，后期渲染时在用
+            this.setViewableClosePrice(defaultData[defaultData.length - 1].close);
+
+
             // 数据数量存在1个以上
             if (this.getChartDataCount() > 1) {
 
                 // @todo:2种情况，1种价钱差不多，1种差太多
-
-                // 获取可视区的收盘价
-                var defaultData = viewableChartData[this.getDefaultId()];
-
-                // 先设置一下可视区closePrice,缓存着，后期渲染时在用
-                this.setViewableClosePrice(defaultData[defaultData.length - 1].close);
 
                 // 计算最高涨幅和最低涨幅
                 var minGains = this.calculateRange(minAndMaxPrice[0]),

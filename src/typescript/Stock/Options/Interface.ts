@@ -22,6 +22,16 @@ module Asgard.Stock.Options {
         chartDataId:string;
     }
 
+    export interface LineChartInterface extends ChartInterface{
+        priceSource:string;
+    }
+
+    export interface VolumeChartInterface extends ChartInterface{
+        volumeHeight:number;
+    }
+
+
+
     export interface MarginInterface {
         left?:number;
         top?:number;

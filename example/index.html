@@ -162,11 +162,18 @@
 <script>
 
 
-    $.get('http://api.markets.wallstreetcn.com:80/v1/chart.json?interval=1D&symbol=XAUUSD&rows=200',function(data){
+    $.get('http://api.markets.wallstreetcn.com:80/v1/chart.json?interval=1D&symbol=SH000001&rows=200',function(data){
 
         data = data.results;
 
         var asgard = new Asgard.StockChart('.right-stock',{
+            zoom:true,
+            margin:{
+                left:100,
+                top:100,
+                bottom:100,
+                right:100
+            },
             data:[
                 {
                     id:'XAUUSD-data-chart',
@@ -184,12 +191,22 @@
                     id:'right-axis',
                     type:'axis',
                     orient:'right'
+                },
+                {
+                    id:'left-axis',
+                    type:'axis',
+                    orient:'left'
                 }
             ],
             charts:[
                 {
                     id:'XAUUSD-candle',
-                    type:'HollowCandle',
+                    type:'candle',
+                    chartDataId:'XAUUSD-data-chart'
+                },
+                {
+                    id:'XAUUSD-volume',
+                    type:'volume',
                     chartDataId:'XAUUSD-data-chart'
                 }
             ]

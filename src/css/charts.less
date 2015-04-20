@@ -1,79 +1,93 @@
 .@{name}-line {
   path {
-    stroke: @line;
+    stroke: @line-border;
+    fill: @line;
   }
 }
+
 .@{name}-area {
 
-  path {
-    fill: @area;
-    fill-opacity: @area-opacity;
+  &-line {
+    fill: @area-line;
+    stroke: @area-line-border;
+  }
+
+  &-area {
+    fill: @area-area;
+    stroke: @area-area-border;
+    fill-opacity: @area-area-opacity;
   }
 }
 
-.@{name}-candle{
-  &-high-low-line{
-    &-up{
+.@{name}-ohlc {
+
+  &-up {
+    stroke: @ohlc-up-border;
+  }
+  &-down {
+    stroke: @ohlc-down-border;
+  }
+  &-equal {
+    stroke: #000;
+  }
+}
+
+.@{name}-candle {
+  &-high-low-line {
+    &-up {
       stroke: @candle-high-low-line;
     }
-    &-down{
+    &-down {
       stroke: @candle-high-low-line;
     }
 
-    &-equal{
+    &-equal {
       fill: @candle-equal;
       stroke: @candle-equal-border;
     }
   }
 
-  &-up{
+  &-up {
     fill: @candle-up;
   }
-  &-down{
+  &-down {
     fill: @candle-down;
   }
-  &-equal{
+  &-equal {
     fill: @candle-equal;
     stroke: @candle-equal-border;
   }
 }
 
-.@{name}-hollow-candle{
-  &-high-low-line{
-    &-up{
+.@{name}-hollow-candle {
+  &-high-low-line {
+    &-up {
       stroke: @hollow-candle-high-low-line;
     }
-    &-down{
+    &-down {
       stroke: @hollow-candle-high-low-line;
     }
 
-    &-equal{
+    &-equal {
       fill: @hollow-candle-high-low-line-equal;
       stroke: @hollow-candle-high-low-line-equal;
     }
   }
-  &-up{
+  &-up {
     fill: @hollow-candle-up;
-    stroke:@hollow-candle-up-border;
+    stroke: @hollow-candle-up-border;
   }
-  &-down{
+  &-down {
     fill: @hollow-candle-down;
     stroke: @hollow-candle-down-border;
   }
-  &-equal{
+  &-equal {
     fill: @hollow-candle-equal;
     stroke: @hollow-candle-equal-border;
   }
 }
 
-.@{name}-bars{
-  &-up{
-    fill: @bars-up;
-  }
-  &-down{
-    fill: @bars-down;
-  }
-  &-consolidation{
-    fill: @bars-equal;
-  }
+.@{name}-volume {
+  fill: @volume;
+  fill-opacity: @volume-opacity;
 }

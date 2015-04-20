@@ -43,7 +43,7 @@
     </style>
     <style type="text/css">.adlesse-hidden{display:none!important;}				.adlesse-invisible{visibility:hidden!important;}				.adlesse-actionpanel{padding:0!important; margin:0!important; position:absolute!important; z-index:3999!important; border:solid #000000 1px!important; background:#ffffff!important; font-family:sans-serif!important; font-weight:normal!important; font-size:10px!important; text-decoration:none!important; color:#000000!important;}				.adlesse-actionpanel a{padding:0!important; margin:0!important; background:none repeat scroll 0 0 transparent!important; font-family:sans-serif!important; font-weight:normal!important; font-size:10px!important; text-decoration:none!important; color: #000000!important; display: inline-block !important }				.adlesse-actionpanel a:hover{text-decoration:underline!important; }				.adlesse-trans-65{opacity:0.65; filter:alpha(opacity=65); -moz-opacity:0.65; filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=65); -khtml-opacity: 0.65; -ms-filter: 'progid:DXImageTransform.Microsoft.Alpha(Opacity=65)';}				.adlesse-rounded-corner{-moz-border-radius:3px; -webkit-border-radius:3px; -khtml-border-radius:3px; border-radius:3px;}								.adlesse-actionpanel-menu{position:absolute!important; z-index:3999!important;background:#ffffff!important; font-family:sans-serif!important; font-weight:normal!important; font-size:10px!important; text-decoration:none!important; color: #000000!important; border:1px solid #000000;text-align:center!important;padding:0!important; margin:5px!important; margin-top:1px!important;min-width:55px;}				.adlesse-actionpanel-menu-h {margin: 5px;list-style-type: none;}				.adlesse-actionpanel-menu-v {list-style-type: none;} 				.adlesse-actionpanel-menu-h li{background:#ffffff; cursor:pointer; display: inline-block; padding: 5px; zoom: 1;*display: inline;border-right:1px solid #cccccc}				.adlesse-actionpanel-menu-v li{background:#ffffff;cursor:pointer;padding:3px; border-bottom: 1px solid #000000;}								.adlesse-widget-div{}				.adlesse-widget-iframe{border:0px; position: relative; z-index: 205!important}</style>
     <script src="../../bower_components/d3/d3.min.js"></script>
-    <script src="../../bower_components/techan.js-master/dist/techan.js"></script>
+    <script src="../../bower_components/techan.js-0.5.0/dist/techan.js"></script>
     <script src="../../bower_components/jquery/dist/jquery.min.js"></script>
 </head>
 <body>
@@ -65,7 +65,17 @@
     var zoom = d3.behavior.zoom()
             .on("zoom", draw);
 
-    var candlestick = techan.plot.candlestick()
+    var yPercent = y.copy();
+
+    var percentAxis = d3.svg.axis()
+            .scale(yPercent)
+            .orient("left")
+            .tickFormat(d3.format('+.1%'));
+
+    var percentAnnotation = techan.plot.axisannotation()
+            .axis(percentAxis);
+
+    var candlestick = techan.plot.crosshair().yAnnotation([percentAnnotation])
             .xScale(x)
             .yScale(y);
 
@@ -82,6 +92,8 @@
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")").call(zoom);;
+
+
 
     svg.append("clipPath")
             .attr("id", "clip")
@@ -111,12 +123,12 @@
     svg.append("rect")
             .attr("class", "pane")
             .attr("width", width)
-            .attr("height", height)
+            .attr("height", height);
 
 
 
 
-    $.get('http://api.markets.wallstreetcn.com:80/v1/chart.json?interval=1D&symbol=sh000001&rows=200',function(data){
+    $.get('http://api.markets.wallstreetcn.com:80/v1/chart.json?interval=1D&symbol=XAUUSD&rows=200',function(data){
 
         data = data.results;
 

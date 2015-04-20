@@ -1,41 +1,19 @@
 module Asgard.Stock.Charts {
 
-    export class Candle extends Base {
+    export class Candle extends Ohlc {
 
-        isUp(d:Data.ChartDataInterface):boolean {
-            return d.open < d.close;
-        }
-
-        isDown(d:Data.ChartDataInterface):boolean {
-            return d.open > d.close;
-        }
-
-        drawCandleRect(data:any):ChartInterface {
+        drawCandleRect(ohlcChartData:OhlcChartDataInterface):ChartInterface {
 
             ['up', 'down', 'equal'].forEach((key)=> {
 
-                var className = Util.generateClassName(this,key),
+                var className = Util.generateClassName(this, key),
                     stockChart = this.getStockChart(),
                     yScale = stockChart.getYScale(),
-                    xScale = stockChart.getXScale(),
-                    selection:any = this.getContainer()
-                                        .selectAll('path.' + className)
-                                        .data([data[key]]);
+                    xScale = stockChart.getXScale();
 
-                if (selection.empty()) {
-                    selection = selection.enter().append('path');
-                } else {
-                    if (selection.enter().empty()) {
-                        selection.exit().remove();
-                    } else {
-                        selection.enter().append('path');
-                    }
-                }
+                this.initSelection(ohlcChartData[key], className).attr('d', (data:Data.ChartDataInterface[]):string => {
 
-
-                selection.attr('d', function (data) {
-
-                    return data.map(function (d) {
+                    return data.map((d):string => {
                         var path = [],
                             open = yScale(d.open),
                             close = yScale(d.close),
@@ -58,39 +36,25 @@ module Asgard.Stock.Charts {
                         return path.join(' ');
 
                     }).join(' ')
-                }).classed(Util.generateClassName(this, key), true);
+                }).classed(className, true);
 
             });
 
             return this;
         }
 
-        drawHighLowLine(data:any):ChartInterface {
+        drawHighLowLine(ohlcChartData:OhlcChartDataInterface):ChartInterface {
 
             ['up', 'down', 'equal'].forEach((key)=> {
 
                 var className = Util.generateClassName(this, 'high-low-line-' + key),
                     stockChart = this.getStockChart(),
                     yScale = stockChart.getYScale(),
-                    xScale = stockChart.getXScale(),
+                    xScale = stockChart.getXScale();
 
-                    selection:any = this.getContainer()
-                        .selectAll('path.' + className)
-                        .data([data[key]]);
+                this.initSelection(ohlcChartData[key], className).attr('d', (data:Data.ChartDataInterface[]):string => {
 
-                if (selection.empty()) {
-                    selection = selection.enter().append('path');
-                } else {
-                    if (selection.enter().empty()) {
-                        selection.exit().remove();
-                    } else {
-                        selection.enter().append('path');
-                    }
-                }
-
-                selection.attr('d', function (data) {
-
-                    return data.map(function (d) {
+                    return data.map((d:Data.ChartDataInterface):string => {
 
                         var path = [],
                             open = yScale(d.open),
@@ -129,28 +93,10 @@ module Asgard.Stock.Charts {
 
         draw():ChartInterface {
 
-            var data = this.getStockChart()
-                .getData()
-                .getChartDataById(this.getChartDataId()).
-                reduce((result, d) => {
-                    if (this.isUp(d)) {
-                        result.up.push(d);
-                    } else if (this.isDown(d)) {
-                        result.down.push(d);
-                    } else {
-                        result.equal.push(d)
-                    }
-                    return result;
-                }, {
-                    up: [],
-                    down: [],
-                    equal: []
-                });
+            var ohlcChartData = this.getOhlcData();
 
-            console.log(data);
-
-            this.drawCandleRect(data);
-            this.drawHighLowLine(data);
+            this.drawCandleRect(ohlcChartData);
+            this.drawHighLowLine(ohlcChartData);
 
             return this;
 

@@ -25,21 +25,23 @@ module Asgard {
         protected xScale:any;
         protected yScale:any;
 
+        protected d3Zoom:D3.Behavior.Zoom;
+
         constructor(selection:any, options:Stock.Options.StockChartInterface = {}) {
 
             // selection 不能修改，所以不用setSelection
             this.selection = Util.convertSelection(selection);
 
+            var defaultOptions = Stock.Options.DefaultStockChart;
             // extend options
-            Util.extend(options, Stock.Options.DefaultStockChart);
-
+            Util.extend(defaultOptions,options);
             // set important property
-            this.setMargin(options.margin).setWidth(options.width).setHeight(options.height);
+            this.setMargin(defaultOptions.margin).setWidth(defaultOptions.width).setHeight(defaultOptions.height);
 
             this.initScale();
             this.initContainer();
 
-            for (var key in options) {
+            for (var key in defaultOptions) {
                 switch (key) {
                     case 'width':
                     case 'height':
@@ -48,10 +50,34 @@ module Asgard {
                 }
 
                 var methodName = 'set' + Util.capitalize(key);
-                methodName in this && this[methodName](options[key]);
+                methodName in this && this[methodName](defaultOptions[key]);
             }
+
+            this.isZoom() && this.initZoom();
         }
 
+        initZoom():StockChart {
+
+            var zoom = this.getD3Zoom();
+
+            this.getBaseContainer().call(zoom);
+
+            // @todo: domain 需要在dataChange后改变
+            zoom.x(this.getXScale()['zoomable']().domain([30,10000])).on('zoom', ()=> {
+
+                // y 不缩放，所以计算当前范围内的最高和最低价格
+                this.getYScale().domain(this.getData().getYdomain());
+
+                // 触发自定义事件
+                // this._zoomEvent.call(this, d3.event);
+
+                this.draw();
+
+            });
+
+
+            return this;
+        }
 
         initScale():StockChart {
 
@@ -89,18 +115,17 @@ module Asgard {
 
             var dataClip = dataContainer
                 .append('g')
-                .attr('clip-path', 'url(#plotAreaClip)')
-                .append('clipPath')
-                .attr('id', 'plotAreaClip');
+                .attr('clip-path', 'url(#plotAreaClip)');
 
-            dataClip.append('rect')
+            dataClip.append('clipPath')
+                .attr('id', 'plotAreaClip').append('rect')
                 .attr({
                     width: this.getWidth(),
                     height: this.getHeight()
                 });
 
             this.setBaseContainer(baseContianer);
-            this.setDataContainer(dataContainer);
+            this.setDataContainer(dataClip);
 
             return this;
         }
@@ -284,12 +309,26 @@ module Asgard {
             return this.data;
         }
 
+        getD3Zoom():D3.Behavior.Zoom {
+            if (!this.d3Zoom) {
+                this.setD3Zoom(d3.behavior.zoom());
+            }
+            return this.d3Zoom;
+        }
+
+        setD3Zoom(d3Zoom:D3.Behavior.Zoom):StockChart {
+            this.d3Zoom = d3Zoom;
+            return this;
+        }
+
         getComponents():Stock.Components.ComponentsInterface {
             return this.components;
         }
-        getCharts():Stock.Charts.ChartsInterface{
+
+        getCharts():Stock.Charts.ChartsInterface {
             return this.charts;
         }
+
         setData(dataOptions:Stock.Options.DataInerface[]):StockChart {
 
             // reset data;

@@ -38,6 +38,10 @@ module Asgard.Stock.Components {
             return this;
         }
 
+        percentTickFormat(){
+
+        }
+
         parseOptions(options:Options.AxisComponentInterface):ComponentInterface {
 
             super.parseOptions(options);
@@ -48,9 +52,16 @@ module Asgard.Stock.Components {
 
             this.setOrient(options.orient);
 
-            this.getD3Axis().scale(this.getScaleByOrient()).innerTickSize(0)
+            this.getD3Axis().scale(this.getScaleByOrient())//.innerTickSize(0)
                 .outerTickSize(0)
                 .tickPadding(10);
+
+            if(this.getOrient() === 'left'){
+
+                this.getD3Axis().tickFormat((d:number):string=>{
+                    return d3.format(',.2fs')(this.getStockChart().getData().calculateRange(d)*100) + '%';
+                });
+            }
 
             return this;
         }
