@@ -2,7 +2,17 @@ module Asgard.Stock.Charts {
 
     export class Line extends Base {
 
-        protected priceSource;
+        protected priceSource:string;
+        protected showDot:boolean;
+
+        setShowDot(showDot:boolean):ChartInterface {
+            this.showDot = showDot;
+            return this;
+        }
+
+        isShowDot():boolean {
+            return this.showDot;
+        }
 
         setPriceSource(priceSource:string):ChartInterface {
             this.priceSource = priceSource;
@@ -19,10 +29,12 @@ module Asgard.Stock.Charts {
 
             this.setPriceSource(options.priceSource || 'close');
 
+            this.setShowDot(options.showDot);
+
             return this;
         }
 
-        getPriceByPriceScource(data:Data.ChartDataInterface):number {
+        getPriceByPriceScource(data:Data.DataInterface):number {
 
             switch (this.getPriceSource()) {
                 case 'hl2':
@@ -39,12 +51,54 @@ module Asgard.Stock.Charts {
             }
         }
 
+        drawDot():ChartInterface {
+
+            var stockChart = this.getStockChart(),
+                yScale = stockChart.getYScale(),
+                xScale = stockChart.getXScale(),
+                data = stockChart.getDataContainer().getDataById(this.getDataId()),
+                className = Util.generateClassName(this, 'dot');
+
+            this.initSelection(data, className).attr('d', (data:Data.DataInterface[]):string => {
+
+                return data.map((d:Data.DataInterface):string => {
+
+                    var path = [],
+                        r = this.barWidth() / 4,
+                        cx = xScale(d.date),
+                        cy = yScale(this.getPriceByPriceScource(d));
+
+                    /**
+                     * <path d="
+                     *   M cx cy
+                     *   m -r, 0
+                     *   a r,r 0 1,1 (r * 2),0
+                     *   a r,r 0 1,1 -(r * 2),0
+                     *  "
+                     *  />
+                     */
+                    path.push(
+                        'M', cx, ',', cy,
+                        'm', -r, ',', 0,
+                        'a', r, ',', r, 0, 1, ',', 1, r * 2, 0,
+                        'a', r, ',', r, 0, 1, ',', 1, -r * 2, 0
+                    );
+
+                    return path.join(' ');
+
+                }).join(' ');
+
+            }).classed(className, true);
+
+            return this;
+        }
+
         drawLine():ChartInterface {
 
             var stockChart = this.getStockChart(),
                 yScale = stockChart.getYScale(),
                 xScale = stockChart.getXScale(),
-                data = stockChart.getData().getChartDataById(this.getChartDataId()),
+                data = stockChart.getDataContainer().getDataById(this.getDataId()),
                 className = Util.generateClassName(this, 'line'),
                 d3SvgLine = d3.svg.line().interpolate('monotone').defined((d) => {
                     return d.close !== null;
@@ -63,6 +117,7 @@ module Asgard.Stock.Charts {
 
         draw():ChartInterface {
             this.drawLine();
+            this.isShowDot() && this.drawDot();
             return this;
         }
 

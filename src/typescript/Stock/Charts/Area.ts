@@ -7,7 +7,7 @@ module Asgard.Stock.Charts {
             var stockChart = this.getStockChart(),
                 yScale = stockChart.getYScale(),
                 xScale = stockChart.getXScale(),
-                data = stockChart.getData().getChartDataById(this.getChartDataId()),
+                data = stockChart.getDataContainer().getDataById(this.getDataId()),
                 className = Util.generateClassName(this, 'area'),
                 d3SvgArea = d3.svg.area().interpolate('monotone').defined((d) => {
                     return d.close !== null;
@@ -28,9 +28,9 @@ module Asgard.Stock.Charts {
         }
 
         draw():ChartInterface{
-
             this.drawLine();
             this.drawArea();
+            this.isShowDot() && this.drawDot();
             return this;
         }
 

@@ -5,20 +5,20 @@ module Asgard.Stock.Charts {
         protected id:string;
         protected container:D3.Selection;
         protected stockChart:StockChart;
-        protected containerPosition:string = ':first-child';
-        protected chartDataId:string;
+        protected containerPosition:string;
+        protected dataId:string;
 
         barWidth():number{
             return Math.max(this.getStockChart().getXScale().band(),1);
         }
 
-        setChartDataId(chartDataId:string):ChartInterface {
-            this.chartDataId = chartDataId;
+        setDataId(dataId:string):ChartInterface {
+            this.dataId = dataId;
             return this;
         }
 
-        getChartDataId():string {
-            return this.chartDataId;
+        getDataId():string {
+            return this.dataId;
         }
 
         getId():string {
@@ -30,8 +30,8 @@ module Asgard.Stock.Charts {
             return this;
         }
 
-        setContainerPosition(containerPosintion:string):ChartInterface {
-            this.containerPosition = containerPosintion;
+        setContainerPosition(containerPosition:string):ChartInterface {
+            this.containerPosition = containerPosition;
             return this;
         }
 
@@ -63,11 +63,12 @@ module Asgard.Stock.Charts {
 
         parseOptions(options:Options.ChartInterface):ChartInterface {
             this.setId(options.id);
-            this.setChartDataId(options.chartDataId);
+            this.setDataId(options.dataId);
+            this.setContainerPosition(options.containerPosition || ':first-child');
             return this;
         }
 
-        protected initSelection(data:Data.ChartDataInterface[], className):D3.Selection {
+        initSelection(data:Data.DataInterface[], className):D3.Selection {
 
             var selection:any = this.getContainer()
                 .selectAll('path.' + className)
@@ -90,7 +91,7 @@ module Asgard.Stock.Charts {
 
             if (!this.getContainer()) {
 
-                var container = this.getStockChart().getDataContainer()
+                var container = this.getStockChart().getDataDom()
                     .insert('g', this.getContainerPosition())
                     .classed(Util.generateClassName(this), true)
                     .classed(this.getId(), true);
@@ -101,7 +102,35 @@ module Asgard.Stock.Charts {
             return this;
         }
 
+        isUp(d:Data.DataInterface):boolean {
+            return d.open < d.close;
+        }
 
+        isDown(d:Data.DataInterface):boolean {
+            return d.open > d.close;
+        }
+
+        getOhlcData():OhlcChartDataInterface {
+
+            return this.getStockChart()
+                .getDataContainer()
+                .getDataById(this.getDataId()).
+                reduce((result:OhlcChartDataInterface, d:Data.DataInterface):OhlcChartDataInterface => {
+                    if (this.isUp(d)) {
+                        result.up.push(d);
+                    } else if (this.isDown(d)) {
+                        result.down.push(d);
+                    } else {
+                        result.equal.push(d)
+                    }
+                    return result;
+                }, {
+                    up: [],
+                    down: [],
+                    equal: []
+                });
+
+        }
         constructor(stockChart:StockChart, options:Options.ChartInterface) {
             this.setStockChart(stockChart);
             this.parseOptions(options);

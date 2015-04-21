@@ -4,6 +4,38 @@ module Asgard.Stock.Components {
 
         private orient:string;
         private d3Axis:D3.Svg.Axis;
+        private tickPercent:boolean;
+        private showField:string;
+
+        setShowField(showField:string):ComponentInterface {
+
+            switch (this.getOrient()) {
+                case 'left':
+                case 'right':
+                    this.showField = showField || Data.DEFAULT_Y_SHOW_FIELD;
+                    break;
+                case 'top':
+                case 'bottom':
+                    // top bottom 必须是 date
+                    this.showField = Data.DEFAULT_X_SHOW_FIELD;
+                    break;
+            }
+
+            return this;
+        }
+
+        getShowField():string {
+            return this.showField;
+        }
+
+        setTickPercent(tickPercent:boolean):ComponentInterface {
+            this.tickPercent = tickPercent;
+            return this;
+        }
+
+        getTickPercent():boolean {
+            return this.tickPercent;
+        }
 
         setOrient(orient:string):ComponentInterface {
 
@@ -38,8 +70,11 @@ module Asgard.Stock.Components {
             return this;
         }
 
-        percentTickFormat(){
-
+        percentTickPercentFormat():ComponentInterface {
+            this.getD3Axis().tickFormat((d:number):string=> {
+                return d3.format(',.2fs')(this.getStockChart().getDataContainer().calculateRange(d) * 100) + '%';
+            });
+            return this;
         }
 
         parseOptions(options:Options.AxisComponentInterface):ComponentInterface {
@@ -50,17 +85,18 @@ module Asgard.Stock.Components {
                 this.setD3Axis(d3.svg.axis());
             }
 
+            this.setTickPercent(options.tickPercent);
+
             this.setOrient(options.orient);
+
+            this.setShowField(options.showField);
 
             this.getD3Axis().scale(this.getScaleByOrient())//.innerTickSize(0)
                 .outerTickSize(0)
                 .tickPadding(10);
 
-            if(this.getOrient() === 'left'){
-
-                this.getD3Axis().tickFormat((d:number):string=>{
-                    return d3.format(',.2fs')(this.getStockChart().getData().calculateRange(d)*100) + '%';
-                });
+            if (this.getTickPercent()) {
+                this.percentTickPercentFormat();
             }
 
             return this;
@@ -74,9 +110,7 @@ module Asgard.Stock.Components {
                 selection = selection.enter().append('g');
             }
 
-
             selection.attr(this.getTransformByOrient());
-
 
             selection.call(this.getD3Axis());
 

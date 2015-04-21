@@ -1,7 +1,11 @@
 .@{name}-line {
-  path {
-    stroke: @line-border;
-    fill: @line;
+  &-line {
+    stroke: @line-line-border;
+    fill: @line-line;
+  }
+
+  &-dot{
+    fill:@line-dot;
   }
 }
 
@@ -88,6 +92,16 @@
 }
 
 .@{name}-volume {
-  fill: @volume;
-  fill-opacity: @volume-opacity;
+
+  &-up{
+    fill: @volume-up;
+  }
+
+  &-down{
+    fill: @volume-down;
+  }
+
+  &-equal{
+    fill: @volume-equal;
+  }
 }

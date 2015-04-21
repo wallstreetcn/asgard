@@ -5,6 +5,8 @@
 
     <script src="../bower_components/d3/d3.js"></script>
     <script src="./d3.plugins.js"></script>
+
+
     <script src="../bower_components/jquery/dist/jquery.min.js"></script>
     <script src="../bower_components/angularjs/angular.min.js"></script>
     <script src="../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
@@ -13,6 +15,7 @@
     <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="../dist/css/theme/default.css"/>
     <link rel="stylesheet" href="index.css"/>
+
 
 </head>
 <body ng-app="asgard">
@@ -177,8 +180,7 @@
             data:[
                 {
                     id:'XAUUSD-data-chart',
-                    data:data,
-                    type:'chart'
+                    data:data
                 }
             ],
             components:[
@@ -195,19 +197,24 @@
                 {
                     id:'left-axis',
                     type:'axis',
-                    orient:'left'
+                    orient:'left',
+                    tickPercent:true
+                },
+                {
+                    id:'tips',
+                    type:'tips'
                 }
             ],
             charts:[
                 {
                     id:'XAUUSD-candle',
                     type:'candle',
-                    chartDataId:'XAUUSD-data-chart'
+                    dataId:'XAUUSD-data-chart'
                 },
                 {
                     id:'XAUUSD-volume',
                     type:'volume',
-                    chartDataId:'XAUUSD-data-chart'
+                    dataId:'XAUUSD-data-chart'
                 }
             ]
         });

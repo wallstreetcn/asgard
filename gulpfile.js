@@ -26,6 +26,7 @@ gulp.task('build', function () {
         'Util/Object',
         'Util/String',
         'Util/Array',
+        'Stock/Data/Interface',
         'Stock/Data/Data',
         'Stock/Options/Interface',
         'Stock/Options/Default',

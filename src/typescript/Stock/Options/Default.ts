@@ -11,7 +11,8 @@ module Asgard.Stock.Options {
         hiddenClass: name + '-hide',
         visibilityClass: name + '-visibility-hidden',
         charts: [],
-        components: []
+        components: [],
+        data:[]
     }
 
 }

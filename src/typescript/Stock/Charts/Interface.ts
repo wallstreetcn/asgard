@@ -9,9 +9,9 @@ module Asgard.Stock.Charts {
     }
 
     export interface OhlcChartDataInterface{
-        up:Data.ChartDataInterface[];
-        down:Data.ChartDataInterface[];
-        equal:Data.ChartDataInterface[];
+        up:Data.DataInterface[];
+        down:Data.DataInterface[];
+        equal:Data.DataInterface[];
     }
 
 }

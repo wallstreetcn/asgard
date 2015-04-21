@@ -1,10 +1,9 @@
 module Asgard.Stock.Options {
 
-    export interface DataInerface {
+    export interface DataInterface {
         id:string;
         data:any[];
         default?:boolean;
-        type:string;
     }
 
     export interface ComponentInterface {
@@ -14,23 +13,25 @@ module Asgard.Stock.Options {
 
     export interface AxisComponentInterface extends ComponentInterface {
         orient:string;
+        tickPercent?:boolean;
+        showField?:string;
     }
 
     export interface ChartInterface {
         id:string;
         type:string;
-        chartDataId:string;
+        dataId:string;
+        containerPosition?:string;
     }
 
     export interface LineChartInterface extends ChartInterface{
         priceSource:string;
+        showDot:boolean;
     }
 
     export interface VolumeChartInterface extends ChartInterface{
         volumeHeight:number;
     }
-
-
 
     export interface MarginInterface {
         left?:number;
@@ -51,6 +52,7 @@ module Asgard.Stock.Options {
         margin?:MarginInterface;
         components?:ComponentInterface[];
         charts?:ChartInterface[];
+        data?:DataInterface[]
     }
 
 }

@@ -11,14 +11,14 @@ module Asgard.Stock.Charts {
                     yScale = stockChart.getYScale(),
                     xScale = stockChart.getXScale();
 
-                this.initSelection(ohlcChartData[key], className).attr('d', (data:Data.ChartDataInterface[]):string => {
+                this.initSelection(ohlcChartData[key], className).attr('d', (data:Data.DataInterface[]):string => {
 
                     return data.map((d):string => {
                         var path = [],
                             open = yScale(d.open),
                             close = yScale(d.close),
                             rangeBand = Math.max(xScale.band(), 1),
-                            xValue = xScale(d.start) - rangeBand / 2;
+                            xValue = xScale(d.date) - rangeBand / 2;
 
                         path.push(
                             'M', xValue, open,
@@ -52,15 +52,15 @@ module Asgard.Stock.Charts {
                     yScale = stockChart.getYScale(),
                     xScale = stockChart.getXScale();
 
-                this.initSelection(ohlcChartData[key], className).attr('d', (data:Data.ChartDataInterface[]):string => {
+                this.initSelection(ohlcChartData[key], className).attr('d', (data:Data.DataInterface[]):string => {
 
-                    return data.map((d:Data.ChartDataInterface):string => {
+                    return data.map((d:Data.DataInterface):string => {
 
                         var path = [],
                             open = yScale(d.open),
                             close = yScale(d.close),
                             rangeBand = Math.max(xScale.band(), 1),
-                            xPoint = xScale(d.start),
+                            xPoint = xScale(d.date),
                             xValue = xPoint - rangeBand / 2;
 
                         // Top

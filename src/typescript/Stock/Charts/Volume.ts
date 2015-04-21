@@ -4,12 +4,11 @@ module Asgard.Stock.Charts {
 
         volumeHeight:number;
 
-
         parseOptions(options:Options.VolumeChartInterface):ChartInterface {
 
             super.parseOptions(options);
 
-            this.setVolumeHeight(options.volumeHeight || this.getStockChart().getHeight() * 0.3);
+            this.setVolumeHeight(options.volumeHeight || this.getStockChart().getHeight());
 
             return this;
         }
@@ -24,47 +23,45 @@ module Asgard.Stock.Charts {
             return this.volumeHeight;
         }
 
-
-
         draw():ChartInterface {
 
             var stockChart = this.getStockChart(),
-                data = stockChart.getData().getChartDataById(this.getChartDataId()),
+                data = stockChart.getDataContainer().getDataById(this.getDataId()),
+                ohlcData = this.getOhlcData(),
                 yScale = d3.scale.linear()
                     .range([this.getVolumeHeight(), 0])
-                    .domain([0, d3.max(data, (d:Data.ChartDataInterface):number=> {
+                    .domain([0, d3.max(data, (d:Data.DataInterface):number=> {
                         return d.volume;
                     })]),
-                xScale = stockChart.getXScale(),
-                className = Util.generateClassName(this);
+                xScale = stockChart.getXScale();
 
+            ['up', 'down', 'equal'].forEach((key:string):void=>{
 
-            //@todo:........ this this this
-            //['up', 'down', 'equal'].forEach((key:string))
+                var className = Util.generateClassName(this , key);
 
-            this.initSelection(data, className)
-                .attr('transform','translate(' + 0 + ',' + (stockChart.getHeight() - this.getVolumeHeight()) + ')')
-                .attr('d', (data:Data.ChartDataInterface[]):string=> {
-                    return data.map((d:Data.ChartDataInterface):string=> {
+                this.initSelection(ohlcData[key], className)
+                    .attr('transform','translate(' + 0 + ',' + (stockChart.getHeight() - this.getVolumeHeight()) + ')')
+                    .attr('d', (data:Data.DataInterface[]):string=> {
+                        return data.map((d:Data.DataInterface):string=> {
 
-                        var vol = d.volume;
+                            var vol = d.volume;
 
-                        if (isNaN(vol)) return null;
+                            if (isNaN(vol)) return null;
 
-                        var zero = yScale(0),
-                            height = yScale(vol) - zero,
-                            rangeBand = this.barWidth(),
-                            xValue = xScale(d.start) - rangeBand / 2;
+                            var zero = yScale(0),
+                                height = yScale(vol) - zero,
+                                rangeBand = this.barWidth(),
+                                xValue = xScale(d.date) - rangeBand / 2;
 
-                        return [
-                            'M', xValue, zero,
-                            'l', 0, height,
-                            'l', rangeBand, 0,
-                            'l', 0, -height
-                        ].join(' ');
-                    }).join(' ');
-                }).classed(className, true);
-
+                            return [
+                                'M', xValue, zero,
+                                'l', 0, height,
+                                'l', rangeBand, 0,
+                                'l', 0, -height
+                            ].join(' ');
+                        }).join(' ');
+                    }).classed(className, true);
+            });
 
             return this;
         }

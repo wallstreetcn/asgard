@@ -56,7 +56,7 @@ module Asgard.Stock.Components {
 
             if (!this.getContainer()) {
 
-                var container = this.getStockChart().getBaseContainer()
+                var container = this.getStockChart().getBaseDom()
                     .insert('g', this.getContainerPosition())
                     .classed(Util.generateClassName(this), true)
                     .classed(this.getId(), true);
