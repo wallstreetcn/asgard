@@ -1,0 +1,27 @@
+{
+  "name": "Asgard",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "author": "点圈点点圈点",
+  "license": "MIT",
+  "dependencies": {
+    "babel": "^5.5.8",
+    "babelify": "^6.1.2",
+    "browserify": "^10.2.4",
+    "gulp": "^3.8.11",
+    "gulp-babel": "^5.1.0",
+    "gulp-concat": "^2.5.2",
+    "gulp-livereload": "^3.8.0",
+    "gulp-plumber": "^0.6.6",
+    "gulp-sourcemaps": "^1.5.2",
+    "gulp-util": "^3.0.6",
+    "gulp-watch": "^4.1.1",
+    "gutil": "^1.6.4",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0"
+  },
+  "devDependencies": {
+    "should": "^7.0.1"
+  }
+}
