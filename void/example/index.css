@@ -1,0 +1,19 @@
+.search{
+    position: relative;
+}
+
+
+.search .search-list{
+    display: block;
+    max-height: 300px;
+    overflow-y: scroll;
+}
+
+.stock{
+    position: absolute;
+    top:0;
+    left:0;
+    bottom:0;
+    right:0;
+    z-index: -1;
+}

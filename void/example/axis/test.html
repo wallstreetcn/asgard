@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script src="../../bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="../../bower_components/d3/d3.js"></script>
+</head>
+<body>
+
+<div id="svg">
+
+</div>
+
+
+<script>
+
+
+    //
+    //        var span = minAndMaxDate[1] - minAndMaxDate[0],
+    //                target = span / 10,
+    //                // 某个数在排好序的数组中的插入位置
+    //                i = d3.bisect(d3_time_scaleSteps, target);
+    //
+    //
+    //        // maybe 插入在最后一位
+    //        if(i == d3_time_scaleSteps.length){
+    //
+    //        }
+
+    function d3_scaleExtent(domain) {
+        var start = domain[0], stop = domain[domain.length - 1];
+        return start < stop ? [start, stop] : [stop, start];
+    }
+
+    function d3_scale_linearTickRange(domain, m) {
+        if (m == null) m = 10;
+
+        var extent = d3_scaleExtent(domain),
+                span = extent[1] - extent[0],
+                step = Math.pow(10, Math.floor(Math.log(span / m) / Math.LN10)),
+                err = m / span * step;
+
+        // Filter ticks to get closer to the desired count.
+        if (err <= .15) step *= 10;
+        else if (err <= .35) step *= 5;
+        else if (err <= .75) step *= 2;
+
+        // Round start and stop values to step interval.
+        extent[0] = Math.ceil(extent[0] / step) * step;
+        extent[1] = Math.floor(extent[1] / step) * step + step * .5; // inclusive
+        extent[2] = step;
+        return extent;
+    }
+
+    var d3_time_scaleSteps = [
+        1e3,    // 1-second 0
+        5e3,    // 5-second 1
+        15e3,   // 15-second 2
+        3e4,    // 30-second 3
+        6e4,    // 1-minute 4
+        3e5,    // 5-minute 5
+        9e5,    // 15-minute 6
+        18e5,   // 30-minute 7
+        36e5,   // 1-hour 8
+        108e5,  // 3-hour 9
+        216e5,  // 6-hour 10
+        432e5,  // 12-hour 11
+        864e5,  // 1-day 12
+        1728e5, // 2-day 13
+        6048e5, // 1-week 14
+        2592e6, // 1-month 15
+        7776e6, // 3-month 16
+        31536e6 // 1-year 17
+    ];
+
+    var d3_time_scaleLocalMethods = [
+        [d3.time.second, 1],
+        [d3.time.second, 5],
+        [d3.time.second, 15],
+        [d3.time.second, 30],
+        [d3.time.minute, 1],
+        [d3.time.minute, 5],
+        [d3.time.minute, 15],
+        [d3.time.minute, 30],
+        [d3.time.hour, 1],
+        [d3.time.hour, 3],
+        [d3.time.hour, 6],
+        [d3.time.hour, 12],
+        [d3.time.day, 1],
+        [d3.time.day, 2],
+        [d3.time.week, 1],
+        [d3.time.month, 1],
+        [d3.time.month, 3],
+        [d3.time.year, 1]
+    ];
+
+
+    var api = 'http://api.markets.wallstreetcn.com:80/v1/chart.json?symbol=sh000001&interval=1D&rows=20';
+
+
+    var container = d3.select('#svg'),
+            svg = container.append('svg').attr({
+                width: 1200
+            });
+
+    $.get(api, function (data) {
+
+        data = data.results;
+
+        var allDate = [];
+        var startDate = [];
+
+        data.forEach(function (d,i) {
+            allDate.unshift(new Date(d.start * 1000))
+            if(i <= 30){
+                startDate.unshift(new Date(d.start * 1000));
+            }
+        });
+
+        var domain = [0, 9];
+        var span = domain[1] - domain[0] + 1;
+        var step = Math.ceil(startDate.length / span);
+
+        var tickValues = [];
+
+        var index = 1;
+
+        while(tickValues.length < 10){
+
+            tickValues.unshift(allDate[allDate.length - index]);
+            index += step;
+
+        }
+
+        var xscale = d3.scale.linear().domain(domain).range([0, 1000]);
+
+        var axis = d3.svg.axis().scale(xscale).tickFormat(function (d) {
+
+            var date = tickValues[d];
+
+            var hao = date.getDate();
+
+            if(hao === 1 || (tickValues[d-1] && tickValues[d-1].getDate() > hao)){
+                return date.getMonth() + 1 + '月';
+            }
+
+            return date.getDate();
+        });
+
+        svg.append('g').call(axis);
+
+
+    }, 'jsonp');
+
+
+</script>
+
+
+</body>
+</html>

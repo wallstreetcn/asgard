@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+<head lang="en">
+    <meta charset="UTF-8">
+
+    <script src="../../bower_components/d3/d3.js"></script>
+    <script src="../d3.plugins.js"></script>
+
+    <script src="../../bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="../../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="../../dist/asgard.js"></script>
+    <link rel="stylesheet" href="../../bower_components/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="../../dist/css/theme/default.css"/>
+
+</head>
+<body>
+
+
+<div class="a"></div>
+
+
+<script>
+
+
+    $.get('http://api.markets.wallstreetcn.com:80/v1/chart.json?interval=1&symbol=SH000001&rows=500',function(data){
+
+        data = data.results;
+        var height = document.documentElement.clientHeight;
+
+        var asgard = new Asgard.Stock.StockChart({
+            data:[
+                {
+                    id:'XAUUSD-data-chart',
+                    data:data
+                }
+            ],
+            components:[
+                {
+                    id:'right-axis',
+                    type:'axis',
+                    orient:'right'
+                }
+            ],
+            charts:[
+                {
+                    id:'XAUUSD-line',
+                    type:'line',
+                    dataId:'XAUUSD-data-chart',
+                    showDot:true
+                }
+            ]
+        });
+        var asgard1 = new Asgard.Stock.StockChart({
+            data:[
+                {
+                    id:'XAUUSD-data-chart',
+                    data:data
+                }
+            ],
+            components:[
+                {
+                    id:'right-axis',
+                    type:'axis',
+                    orient:'right'
+                }
+            ],
+            charts:[
+                {
+                    id:'XAUUSD-candle',
+                    type:'area',
+                    dataId:'XAUUSD-data-chart'
+                }
+            ]
+        });
+        var asgard3 = new Asgard.Stock.StockChart({
+            data:[
+                {
+                    id:'XAUUSD-data-chart',
+                    data:data
+                }
+            ],
+            components:[
+                {
+                    id:'right-axis',
+                    type:'axis',
+                    orient:'right',
+                    showField:'volume'
+                },
+                {
+                    id:'bottom-axis',
+                    type:'axis',
+                    orient:'bottom'
+                }
+            ],
+            charts:[
+                {
+                    id:'XAUUSD-ohlc',
+                    type:'volume',
+                    dataId:'XAUUSD-data-chart'
+                }
+            ]
+        });
+
+
+        var layout = new Asgard.Stock.StockLayout('.a',{
+            zoom:true,
+            margin:{
+                left:50,
+                top:50,
+                bottom:50,
+                right:50
+            },
+            layouts:[
+                {
+                    id:'one',
+                    stockChart:asgard,
+                    height:'30%'
+                },
+                {
+                    id:'two',
+                    stockChart:asgard1,
+                    height:'30%'
+                },
+                {
+                    id:'three',
+                    stockChart:asgard3,
+                    height:'40%'
+                }
+            ]
+        });
+
+        layout.draw();
+
+        window.onresize = function(){
+            layout.setWidth(document.documentElement.clientWidth);
+            layout.setHeight(document.documentElement.clientHeight);
+            layout.draw();
+        }
+
+
+    },'jsonp')
+
+</script>
+
+
+</body>
+</html>

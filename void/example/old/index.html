@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+<head lang="en">
+    <meta charset="UTF-8">
+
+    <script src="../../bower_components/d3/d3.js"></script>
+    <script src="../d3.plugins.js"></script>
+
+
+    <script src="../../bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="../../bower_components/angularjs/angular.min.js"></script>
+    <script src="../../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="../../dist/asgard.js"></script>
+    <script src="index.js"></script>
+    <link rel="stylesheet" href="../../bower_components/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="../../dist/css/theme/default.css"/>
+    <link rel="stylesheet" href="index.css"/>
+
+
+</head>
+<body ng-app="asgard">
+
+
+
+<div class="left-options-control">
+    <button class="navbar-toggle collapsed close-status" type="button">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+    </button>
+</div>
+
+
+<div class="left-options" ng-controller="exampleController">
+
+        <div class="form-group">
+            <form>
+                <div class="form-group">
+                    <label>Symbol</label>
+                    <select class="form-control" ng-model="currentSymbol" ng-options="finance.symbol as finance.name for finance in finances"></select>
+                </div>
+                <div class="form-group">
+                    <label>Interval</label>
+                    <select class="form-control" ng-model="currentInterval" ng-options="interval for interval in intervals"></select>
+                </div>
+                <div class="form-group">
+                    <label>Chart</label>
+                    <select class="form-control" ng-model="currentChart" ng-options="chart for chart in charts"></select>
+                </div>
+                <div class="form-group" ng-show="!asgard">
+                    <div class="form-group col-sm-6 pl0" ng-show="!asgard">
+                        <label>Width</label>
+                        <input type="number" class="form-control" ng-model="currentWidth">
+                    </div>
+                    <div class="form-group col-sm-6 pl0" ng-show="!asgard">
+                        <label>Height</label>
+                        <input type="number" class="form-control" ng-model="currentHeight">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-show="!asgard">
+                    <label>Margin</label>
+                    <div class="input-group mtb5">
+                        <div class="input-group-addon">Left</div>
+                        <input type="number" class="form-control" ng-model="currentMarginLeft">
+                    </div>
+                    <div class="input-group mtb5">
+                        <div class="input-group-addon">Right</div>
+                        <input type="number" class="form-control" ng-model="currentMarginRight">
+                    </div>
+                    <div class="input-group mtb5">
+                        <div class="input-group-addon">Top</div>
+                        <input type="number" class="form-control" ng-model="currentMarginTop">
+                    </div>
+                    <div class="input-group mtb5">
+                        <div class="input-group-addon">Bottom</div>
+                        <input type="number" class="form-control" ng-model="currentMarginBottom">
+                    </div>
+                </div>
+                <div class="form-group" ng-show="!asgard">
+                    <label>Component</label>
+                    <select multiple size="9" class="form-control" ng-model="currentComponents" ng-options="component.id for component in components">
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary" ng-click="add()">{{asgard?'更新':'生成'}}</button>
+                <button type="button" class="btn btn-success" ng-show="asgard" ng-click="compare()">比较</button>
+            </form>
+        </div>
+
+        <div class="form-group" ng-show="asgard && showContainers.length > 1">
+            <h5>Containers</h5>
+            <form class="form-inline">
+                <div class="form-group">
+                    <select ng-show="showContainers.length > 1" class="form-control" ng-model="currentShowContainer" ng-options="name as name for name in showContainers"></select>
+                    <button ng-show="showContainers.length > 1 && currentShowContainer !== message.SHOW_CONTAINER" type="button" class="btn btn-danger" ng-click="hide()">隐藏</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-group" ng-show="asgard && hideContainers.length > 1">
+            <h5 ng-show="asgard && showContainers.length <= 1">Containers</h5>
+            <form class="form-inline">
+                <div class="form-group">
+                    <select ng-show="hideContainers.length > 1" class="form-control" ng-model="currentHideContainer" ng-options="id as id for id in hideContainers"></select>
+                    <button ng-show="hideContainers.length > 1 && currentHideContainer !== message.HIDE_CONTAINER" type="button" class="btn btn-danger" ng-click="show()">显示</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-group" ng-show="asgard && useComponents.length > 1">
+            <h5>Components</h5>
+            <form class="form-inline">
+                <div class="form-group">
+                    <select ng-show="useComponents.length > 1" class="form-control" ng-model="currentUseComponent" ng-options="id as id for id in useComponents"></select>
+                    <button ng-show="useComponents.length > 1 && currentUseComponent !== message.USE_COMPONENT" type="button" class="btn btn-danger" ng-click="removeComponent()">移除</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-group" ng-show="asgard && unusedComponents.length > 1">
+            <h5 ng-show="asgard && useComponents.length <= 1">Components</h5>
+            <form class="form-inline">
+                <div class="form-group">
+                    <select ng-show="unusedComponents.length > 1" class="form-control" ng-model="currentUnusedComponent" ng-options="id as id for id in unusedComponents"></select>
+                    <button ng-show="unusedComponents.length > 1 && currentUnusedComponent !== message.USE_UNUSED_COMPONENT" type="button" class="btn btn-danger" ng-click="addComponent()">添加</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-group" ng-show="asgard && useCharts.length > 1">
+            <h5>Charts</h5>
+            <form class="form-inline">
+                <div class="form-group">
+                    <select ng-show="useCharts.length > 1" class="form-control" ng-model="currentUseChart" ng-options="name as name for name in useCharts"></select>
+                    <button ng-show="useCharts.length > 1 && currentUseChart !== message.USE_CHART" type="button" class="btn btn-danger" ng-click="removeChart()">移除</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-group" ng-show="asgard && useData.length > 1">
+            <h5>Data</h5>
+            <form class="form-inline">
+                <div class="form-group">
+                    <select ng-show="useData.length > 1" class="form-control" ng-model="currentUseData" ng-options="name as name for name in useData"></select>
+                    <button ng-show="useData.length > 1 && currentUseData !== message.USE_DATA" type="button" class="btn btn-danger" ng-click="removeData()">移除</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="error-operate" ng-show="asgard && errorMessage">
+            <p class="bg-danger">{{errorMessage}}</p>
+        </div>
+
+        <button type="button" class="close left-options-close"><span>&times;</span></button>
+
+</div>
+
+<div class="right-stock">
+</div>
+
+
+</body>
+</html>
