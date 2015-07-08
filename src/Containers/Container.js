@@ -1,3 +1,5 @@
+import Utils from '../Utils/Utils.js';
+
 export default class Container {
 
     constructor() {
@@ -5,11 +7,20 @@ export default class Container {
         this.elementInjectMap = {};
     }
 
+
+    count() {
+        return this.containers.length;
+    }
+
     elementInject(element) {
         for (let key in this.elementInjectMap) {
+
             let value = this.elementInjectMap[key];
-            if (typeof element[key] === 'Function') {
-                element[key].call(element, value);
+
+            var injectFunName = 'set' + Utils.String.ucfirst(key);
+
+            if (Utils.type(element[injectFunName]) === 'function') {
+                element[injectFunName].call(element, value);
             } else {
                 element[key] = value;
             }
@@ -41,10 +52,10 @@ export default class Container {
 
         switch (placement) {
             case 'prepend':
-                this.container.unshift(element);
+                this.containers.unshift(element);
                 break;
             case 'append':
-                this.container.push(element);
+                this.containers.push(element);
                 break;
             default:
                 let l = this.components.length - 1;
@@ -54,19 +65,19 @@ export default class Container {
                 } else if (placement >= l) {
                     placement = l;
                 } else {
-                    this.container.splice(placement, 0, element);
+                    this.containers.splice(placement, 0, element);
                 }
         }
         return this;
     }
 
     removeElement(name) {
-        for (let i = 0, l = this.container.length; i < l; i++) {
+        for (let i = 0, l = this.containers.length; i < l; i++) {
 
-            let element = this.container[i];
+            let element = this.containers[i];
 
             if (element.getName() === name) {
-                delete this.container[i];
+                delete this.containers[i];
             }
         }
 
@@ -74,20 +85,26 @@ export default class Container {
     }
 
     clear() {
-        this.container = [];
+        this.containers = [];
         return this;
     }
 
     getElement(name) {
-        for (let i = 0, l = this.container.length; i < l; i++) {
+        for (let i = 0, l = this.containers.length; i < l; i++) {
 
-            let element = this.container[i];
+            let element = this.containers[i];
 
             if (element.getName() === name) {
-                return this.container[i];
+                return this.containers[i];
             }
         }
         return null;
 
+    }
+
+    render() {
+        this.containers.forEach((element)=> {
+            element.render();
+        })
     }
 }

@@ -216,10 +216,9 @@
 
             this.setTickFormat(method[2]);
 
-
             // 从步进值 从开始时间，到结束时间 生成时间范围
+            // interval.range(visibleDomain[0], +visibleDomain[visibleDomain.length - 1] + 1, steps);
             var intervalRange = visibleDomain;
-
 
             // 保存实际的数据
             var domainTimes = [];
@@ -326,8 +325,6 @@
 
             var minDate = fDomain[0] / 1000;
             var maxDate = fDomain[fDomain.length - 1] / 1000;
-
-
 
 
 

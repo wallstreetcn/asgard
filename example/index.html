@@ -2,16 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script></script>
     <script src="../dist/asgard.js"></script>
+    <script src="jquery/dist/jquery.min.js"></script>
 </head>
 <body>
 
+<button id="rerender">rerender</button>
+
+<canvas id="canvas">
+
+</canvas>
+
+
 <script>
-    new Asgard.Layout({
-        components:[
-            new Asgard.Component.Axis
-        ]
-    });
+
+    $.get('http://api.markets.wallstreetcn.com:80/v1/chart.json?interval=1&symbol=SH000001&rows=200', function (data) {
+        var l = new Asgard.Layout({
+            canvas: document.getElementById('canvas'),
+            canvasWidth: 1000,
+            canvasHeight: 500,
+            zoom: 1,
+            data: new Asgard.Data({
+                SH000001: data.results
+            }),
+            padding: {
+                right: 35,
+                bottom: 20,
+                top: 10
+            },
+            components: [
+                new Asgard.Components.Axis({
+                    orient: 'bottom'
+                }),
+                new Asgard.Components.Axis({
+                    orient: 'right'
+                })
+            ]
+        });
+
+        l.render();
+
+        document.getElementById('rerender').onclick = function () {
+            l.render();
+        }
+
+    }, 'jsonp');
+
+
 </script>
 </body>
 </html>
