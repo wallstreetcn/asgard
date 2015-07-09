@@ -43,11 +43,11 @@ export default class Axis extends Component {
     }
 
     getWidth() {
-        return this.layout.getWidth();
+        return this.layout.getPaddingByOrient('left') + this.layout.getWidth();
     }
 
     getHeight() {
-        return this.layout.getHeight();
+        return this.layout.getPaddingByOrient('top') + this.layout.getHeight();
     }
 
     renderLine() {
@@ -60,7 +60,7 @@ export default class Axis extends Component {
                 ctx.lineTo(this.getWidth(), this.getHeight());
                 break;
             case 'bottom':
-                ctx.moveTo(0, this.getHeight());
+                ctx.moveTo(this.layout.getPaddingByOrient('left'),this.getHeight());
                 ctx.lineTo(this.getWidth(), this.getHeight());
                 break;
         }

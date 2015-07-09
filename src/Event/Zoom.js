@@ -44,9 +44,11 @@ export default class Zoom {
 
     zoom(callback) {
 
-        var originRange = this.scale.getRange();
+
 
         this.canvas.addEventListener(this.zoomWheel, (e)=> {
+
+            var originRange = this.scale.getRange();
 
             e.preventDefault();
 
@@ -71,7 +73,6 @@ export default class Zoom {
 
             this.scale.indexLinear.setDomain(domain);
 
-            console.log(domain);
 
             callback();
         });

@@ -14,13 +14,14 @@ export default class Data {
     }
 
     getDataByName(name) {
-        var getData = null;
+        let getData = null;
+
         Utils.forEach(this.container, function (data) {
             if (data.name === name) {
                 getData = data;
             }
         });
-        return data;
+        return getData;
     }
 
 

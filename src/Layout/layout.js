@@ -69,7 +69,7 @@ export default class Layout {
         this.components.addElementInject('layout', this);
 
         this.charts = new Charts();
-        this.components.addElementInject('layout', this);
+        this.charts.addElementInject('layout', this);
     }
 
 
@@ -173,13 +173,17 @@ export default class Layout {
     }
 
 
+    /*
+     * scale => padding height width data
+     */
+
     render() {
 
         this.getContext().clearRect(0, 0,this.getCanvasWidth(), this.getCanvasHeight());
 
         if (this.isRendered && this.yScale) {
             this.yScale.setRange([this.getPaddingByOrient('top'), this.getHeight()]);
-            this.yScale.setDomain([5000, 3000]);
+            this.yScale.setDomain([3400,3600]);
         }
 
         if (this.isRendered && this.xScale) {

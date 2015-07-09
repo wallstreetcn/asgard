@@ -29,7 +29,8 @@
             padding: {
                 right: 35,
                 bottom: 20,
-                top: 10
+                top: 10,
+                left:10
             },
             components: [
                 new Asgard.Components.Axis({
@@ -37,6 +38,11 @@
                 }),
                 new Asgard.Components.Axis({
                     orient: 'right'
+                })
+            ],
+            charts: [
+                new Asgard.Charts.Line({
+                    data:'SH000001'
                 })
             ]
         });
